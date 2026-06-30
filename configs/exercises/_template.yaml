@@ -1,0 +1,17 @@
+# Exercise config template — copy for new movements (deadlift, bench press, etc.)
+
+id: CHANGE_ME
+display_name: Human Readable Name
+description: Short description of the movement
+
+landmark_groups:
+  example_group:
+    - left_shoulder
+    - right_shoulder
+
+angles:
+  - name: example_angle
+    points: [left_hip, left_knee, left_ankle]
+
+form_mistakes:
+  - example_mistake_id

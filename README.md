@@ -54,7 +54,19 @@ AI-Coach/
 └── README.md
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full pipeline and [docs/DATASETS.md](docs/DATASETS.md) for data licensing guidance.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full pipeline, [docs/DATASETS.md](docs/DATASETS.md) for data licensing, and [docs/EXERCISES.md](docs/EXERCISES.md) for adding new gym movements.
+
+## Pose extraction (Phase 3)
+
+```bash
+# From video
+python scripts/extract_pose.py --video path/to/squat.mp4 --exercise squat --overlay
+
+# From Phase 2 frames
+python scripts/extract_pose.py --frames-dir data/interim/squat_clip --exercise squat
+```
+
+Output: `data/processed/pose/<video_id>/keypoints.json` (+ optional CSV and skeleton video).
 
 ## Development phases
 
@@ -62,7 +74,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full pipeline and [docs
 |-------|--------|--------|
 | 1 | Repository setup | ✅ Done |
 | 2 | Video processing | ✅ Done |
-| 3 | Pose extraction | Pending |
+| 3 | Pose extraction | ✅ Done |
 | 4 | Feature engineering | Pending |
 | 5 | Rep segmentation | Pending |
 | 6 | Rule-based form analyzer | Pending |

@@ -50,11 +50,35 @@ feat(data): add video loading and frame extraction pipeline
 
 ---
 
-## Phase 3 — Pose extraction (next)
+## Phase 3 — Pose extraction ✅
 
-**Planned files:** `src/pose/mediapipe_estimator.py`, `src/pose/keypoint_schema.py`, `scripts/extract_pose.py`, `tests/test_pose.py`
+**Files changed:** `src/pose/*`, `src/visualization/skeleton.py`, `src/utils/exercise_config.py`, `configs/exercises/`, `scripts/extract_pose.py`, `tests/test_pose*.py`, `docs/EXERCISES.md`
+
+**Implemented:** Exercise-agnostic pose schema, MediaPipe backend with factory pattern, pose pipeline (video or frames), JSON/CSV export, skeleton overlay, per-exercise YAML configs.
+
+**How to test:**
+```bash
+pytest tests/test_pose_schema.py tests/test_pose.py -v
+
+python scripts/extract_pose.py --video path/to/squat.mp4 --exercise squat --overlay
+python scripts/extract_pose.py --frames-dir data/interim/<name> --exercise squat
+```
+
+**Commit message:**
+```
+feat(pose): add scalable MediaPipe pose extraction pipeline
+
+Exercise-agnostic keypoint schema, backend factory, per-exercise configs,
+skeleton overlay, and CLI for video or pre-extracted frames.
+```
+
+---
+
+## Phase 4 — Feature engineering (next)
+
+**Planned files:** `src/features/angles.py`, `src/features/normalization.py`, `scripts/compute_features.py`, `tests/test_features.py`
 
 **Commit message (suggested):**
 ```
-feat(pose): add MediaPipe keypoint extraction and skeleton overlay
+feat(features): compute joint angles and normalized movement features
 ```

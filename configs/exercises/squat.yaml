@@ -1,0 +1,57 @@
+# Squat — exercise-specific metadata for downstream form analysis (Phase 4+).
+# Pose extraction is identical for all exercises; this file defines which
+# landmarks and angles matter for squat coaching.
+
+id: squat
+display_name: Squat
+description: Bilateral lower-body compound movement
+
+# Landmark groups used by feature engineering and form rules
+landmark_groups:
+  lower_body_left:
+    - left_hip
+    - left_knee
+    - left_ankle
+    - left_heel
+    - left_foot_index
+  lower_body_right:
+    - right_hip
+    - right_knee
+    - right_ankle
+    - right_heel
+    - right_foot_index
+  torso:
+    - left_shoulder
+    - right_shoulder
+    - left_hip
+    - right_hip
+  alignment:
+    - left_shoulder
+    - right_shoulder
+    - left_hip
+    - right_hip
+    - left_knee
+    - right_knee
+
+# Joint angles computed in Phase 4 (names are stable API for all exercises)
+angles:
+  - name: left_knee
+    points: [left_hip, left_knee, left_ankle]
+  - name: right_knee
+    points: [right_hip, right_knee, right_ankle]
+  - name: left_hip
+    points: [left_shoulder, left_hip, left_knee]
+  - name: right_hip
+    points: [right_shoulder, right_hip, right_knee]
+  - name: torso_lean
+    points: [mid_hip, mid_shoulder, vertical_up]
+    note: computed in feature module using derived midpoints
+
+# Form mistake IDs referenced by rule engine (Phase 6)
+form_mistakes:
+  - insufficient_depth
+  - excessive_forward_lean
+  - knee_valgus
+  - heel_lift
+  - asymmetry
+  - unstable_path
