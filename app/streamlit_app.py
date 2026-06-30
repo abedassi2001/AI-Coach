@@ -19,6 +19,7 @@ from src.inference.video_pipeline import (
     run_full_pipeline,
     stage_uploaded_video,
 )
+from src.utils.web_video import prepare_video_for_browser
 
 st.set_page_config(
     page_title="AI Gym Form Coach",
@@ -27,11 +28,19 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st.title("AI Gym Form Coach")
-st.caption(
-    "Upload a squat video — pose estimation, rep segmentation, rule + ML analysis, "
-    "and free coaching feedback. No API key required."
-)
+if "analysis_result" not in st.session_state:
+    st.session_state.analysis_result = None
+
+
+def _show_video(source: Path | bytes, *, filename: str = "video.mp4") -> None:
+    """Display a video in Streamlit using browser-compatible bytes."""
+    try:
+        data, mime = prepare_video_for_browser(source, filename=filename)
+        st.video(data, format=mime)
+    except FileNotFoundError:
+        st.warning("Video file not found.")
+    except Exception as exc:
+        st.error(f"Could not play video: {exc}")
 
 
 def _quality_badge(label: str | None) -> str:
@@ -88,7 +97,7 @@ def _render_results(result) -> None:
     with vid_col:
         st.subheader("Annotated video")
         if result.evaluation_video and result.evaluation_video.exists():
-            st.video(str(result.evaluation_video))
+            _show_video(result.evaluation_video)
         else:
             st.info("Run analysis to generate the annotated evaluation video.")
 
@@ -108,6 +117,12 @@ def _render_results(result) -> None:
         st.info("Enable coaching in the sidebar and re-run to generate feedback.")
 
 
+st.title("AI Gym Form Coach")
+st.caption(
+    "Upload a squat video — pose estimation, rep segmentation, rule + ML analysis, "
+    "and free coaching feedback. No API key required."
+)
+
 with st.sidebar:
     st.header("Settings")
     exercise = st.selectbox("Exercise", ["squat"], index=0)
@@ -126,7 +141,7 @@ with st.sidebar:
 
 tab_upload, tab_demo = st.tabs(["Upload video", "Sample videos"])
 
-result = None
+result = st.session_state.analysis_result
 
 with tab_upload:
     uploaded = st.file_uploader(
@@ -134,7 +149,17 @@ with tab_upload:
         type=["mp4", "mov", "avi", "mkv", "webm"],
     )
     if uploaded is not None:
-        st.video(uploaded)
+        upload_bytes = uploaded.getvalue()
+        st.session_state.upload_preview_bytes = upload_bytes
+        st.session_state.upload_preview_name = uploaded.name
+        st.subheader("Preview")
+        _show_video(upload_bytes, filename=uploaded.name)
+    elif st.session_state.get("upload_preview_bytes"):
+        st.subheader("Preview")
+        _show_video(
+            st.session_state.upload_preview_bytes,
+            filename=st.session_state.get("upload_preview_name", "video.mp4"),
+        )
 
     run_upload = st.button("Analyze uploaded video", type="primary", disabled=uploaded is None)
 
@@ -165,6 +190,7 @@ with tab_upload:
                     generate_coaching_report=include_coaching,
                     on_progress=on_progress,
                 )
+            st.session_state.analysis_result = result
             progress.progress(1.0, text="Complete")
             status.success(f"Finished analysis for **{result.source_id}**")
         except Exception as exc:
@@ -180,7 +206,8 @@ with tab_demo:
         labels = [d["source_id"] for d in demos]
         choice = st.selectbox("Choose a video", labels, index=0)
         selected = next(d for d in demos if d["source_id"] == choice)
-        st.video(selected["path"])
+        st.subheader("Preview")
+        _show_video(Path(selected["path"]))
 
         col_a, col_b = st.columns(2)
         with col_a:
@@ -189,10 +216,12 @@ with tab_demo:
             load_only = st.button("Load existing results")
 
         if load_only:
-            result = load_existing_result(choice)
-            if result is None:
+            loaded = load_existing_result(choice)
+            if loaded is None:
                 st.warning("No processed data yet — click **Run full analysis** first.")
             else:
+                st.session_state.analysis_result = loaded
+                result = loaded
                 st.success(f"Loaded cached results for **{choice}**")
 
         if run_demo:
@@ -213,6 +242,7 @@ with tab_demo:
                         generate_coaching_report=include_coaching,
                         on_progress=on_progress_demo,
                     )
+                st.session_state.analysis_result = result
                 progress.progress(1.0, text="Complete")
                 status.success(f"Finished analysis for **{result.source_id}**")
             except Exception as exc:
@@ -220,6 +250,7 @@ with tab_demo:
                 status.error(f"Analysis failed: {exc}")
                 st.exception(exc)
 
+result = st.session_state.analysis_result
 if result is not None:
     st.divider()
     _render_results(result)

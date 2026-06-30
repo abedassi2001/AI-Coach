@@ -14,6 +14,7 @@ from src.feedback.form_analyzer import load_pose_frames, load_repetitions
 from src.inference.rep_classifier import RepQualityPredictor
 from src.pose.keypoint_schema import Keypoint, PoseFrame
 from src.visualization.skeleton import draw_skeleton_on_frame
+from src.utils.web_video import write_browser_playable_video
 
 # BGR
 _COLOR_GOOD = (0, 200, 80)
@@ -330,7 +331,7 @@ def write_evaluation_video(
 
     cap.release()
     writer.release()
-    return output_path
+    return write_browser_playable_video(output_path)
 
 
 def write_rep_snapshots(

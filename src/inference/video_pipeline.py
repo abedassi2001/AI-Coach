@@ -13,7 +13,7 @@ from src.features.rep_segmentation import RepSegmentationPipeline
 from src.feedback.coaching_pipeline import generate_coaching
 from src.feedback.form_analyzer import SquatFormAnalyzer
 from src.pose.pose_pipeline import PoseExtractionPipeline
-from src.utils.config import get_project_root, resolve_path
+from src.utils.web_video import ensure_browser_playable
 from src.visualization.evaluation_overlay import (
     build_evaluation_report,
     load_evaluation_artifacts,
@@ -168,6 +168,17 @@ def run_full_pipeline(
     )
 
 
+def _resolve_evaluation_video(eval_dir: Path, source_id: str) -> Path | None:
+    """Pick the browser-playable evaluation MP4 if it exists."""
+    base = eval_dir / f"{source_id}_evaluation.mp4"
+    web = eval_dir / f"{source_id}_evaluation_web.mp4"
+    if web.exists():
+        return web
+    if base.exists():
+        return ensure_browser_playable(base)
+    return None
+
+
 def load_existing_result(source_id: str) -> PipelineResult | None:
     """Load outputs if this video was already processed."""
     root = get_project_root()
@@ -195,7 +206,7 @@ def load_existing_result(source_id: str) -> PipelineResult | None:
     report = build_evaluation_report(artifacts)
 
     eval_dir = root / "data/processed/evaluation" / source_id
-    eval_video = eval_dir / f"{source_id}_evaluation.mp4"
+    eval_video = _resolve_evaluation_video(eval_dir, source_id)
     chart = eval_dir / "knee_angle_chart.png"
     coaching_txt = root / "data/processed/coaching" / source_id / "coaching_report.txt"
 
@@ -203,7 +214,7 @@ def load_existing_result(source_id: str) -> PipelineResult | None:
         source_id=source_id,
         exercise=artifacts.exercise,
         video_path=artifacts.video_path,
-        evaluation_video=eval_video if eval_video.exists() else None,
+        evaluation_video=eval_video,
         chart_path=chart if chart.exists() else None,
         coaching_text_path=coaching_txt if coaching_txt.exists() else None,
         report=report,
