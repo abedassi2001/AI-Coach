@@ -93,11 +93,30 @@ feat(features): compute joint angles and normalized movement features
 
 ---
 
-## Phase 5 — Rep segmentation (next)
+## Phase 5 — Rep segmentation ✅
 
-**Planned files:** `src/features/rep_segmentation.py`, `scripts/segment_reps.py`, `tests/test_reps.py`
+**Files changed:** `src/features/rep_segmentation.py`, `scripts/segment_reps.py`, `tests/test_reps.py`
+
+**Implemented:** Valley detection on knee angle signal, rep boundaries, phase labels (standing/descending/bottom/ascending/finished), reps.json export.
+
+**How to test:**
+```bash
+pytest tests/test_reps.py -v
+python scripts/segment_reps.py data/processed/features/sample_squat/features.csv
+```
+
+**Commit message:**
+```
+feat(features): segment squat repetitions from knee angle time series
+```
+
+---
+
+## Phase 6 — Rule-based form analyzer (next)
+
+**Planned files:** `src/feedback/rules_engine.py` or `src/features/form_analyzer.py`, `scripts/analyze_form.py`, `tests/test_form_rules.py`
 
 **Commit message (suggested):**
 ```
-feat(features): segment squat repetitions from knee angle time series
+feat(feedback): add rule-based squat form mistake detection
 ```

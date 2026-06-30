@@ -76,6 +76,14 @@ python scripts/compute_features.py data/processed/pose/sample_squat/keypoints.js
 
 Output: `data/processed/features/<video_id>/features.csv` and `features.json`.
 
+## Rep segmentation (Phase 5)
+
+```bash
+python scripts/segment_reps.py data/processed/features/sample_squat/features.csv
+```
+
+Output: `data/processed/reps/<video_id>/reps.json` with rep boundaries and phases.
+
 ## Development phases
 
 | Phase | Focus | Status |
@@ -84,7 +92,7 @@ Output: `data/processed/features/<video_id>/features.csv` and `features.json`.
 | 2 | Video processing | ✅ Done |
 | 3 | Pose extraction | ✅ Done |
 | 4 | Feature engineering | ✅ Done |
-| 5 | Rep segmentation | Pending |
+| 5 | Rep segmentation | ✅ Done |
 | 6 | Rule-based form analyzer | Pending |
 | 7 | ML baseline classifier | Pending |
 | 8 | Deep learning sequence model | Pending |
