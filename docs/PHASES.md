@@ -74,11 +74,30 @@ skeleton overlay, and CLI for video or pre-extracted frames.
 
 ---
 
-## Phase 4 — Feature engineering (next)
+## Phase 4 — Feature engineering ✅
 
-**Planned files:** `src/features/angles.py`, `src/features/normalization.py`, `scripts/compute_features.py`, `tests/test_features.py`
+**Files changed:** `src/features/angles.py`, `src/features/normalization.py`, `src/features/feature_pipeline.py`, `scripts/compute_features.py`, `tests/test_features.py`
+
+**Implemented:** Joint angle math, body scale (torso length), exercise-config-driven angles, derived features (knee avg/min/asymmetry), optional smoothing, CSV/JSON export.
+
+**How to test:**
+```bash
+pytest tests/test_features.py -v
+python scripts/compute_features.py data/processed/pose/sample_squat/keypoints.json
+```
+
+**Commit message:**
+```
+feat(features): compute joint angles and normalized movement features
+```
+
+---
+
+## Phase 5 — Rep segmentation (next)
+
+**Planned files:** `src/features/rep_segmentation.py`, `scripts/segment_reps.py`, `tests/test_reps.py`
 
 **Commit message (suggested):**
 ```
-feat(features): compute joint angles and normalized movement features
+feat(features): segment squat repetitions from knee angle time series
 ```

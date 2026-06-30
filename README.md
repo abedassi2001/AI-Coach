@@ -68,6 +68,14 @@ python scripts/extract_pose.py --frames-dir data/interim/squat_clip --exercise s
 
 Output: `data/processed/pose/<video_id>/keypoints.json` (+ optional CSV and skeleton video).
 
+## Feature engineering (Phase 4)
+
+```bash
+python scripts/compute_features.py data/processed/pose/sample_squat/keypoints.json
+```
+
+Output: `data/processed/features/<video_id>/features.csv` and `features.json`.
+
 ## Development phases
 
 | Phase | Focus | Status |
@@ -75,7 +83,7 @@ Output: `data/processed/pose/<video_id>/keypoints.json` (+ optional CSV and skel
 | 1 | Repository setup | ✅ Done |
 | 2 | Video processing | ✅ Done |
 | 3 | Pose extraction | ✅ Done |
-| 4 | Feature engineering | Pending |
+| 4 | Feature engineering | ✅ Done |
 | 5 | Rep segmentation | Pending |
 | 6 | Rule-based form analyzer | Pending |
 | 7 | ML baseline classifier | Pending |
