@@ -131,11 +131,32 @@ feat(feedback): add rule-based squat form analysis and coaching messages
 
 ---
 
-## Phase 7 — ML baseline classifier (next)
+## Phase 7 — ML baseline classifier ✅
 
-**Planned files:** `src/models/baseline_classifier.py`, `src/training/train_baseline.py`, `scripts/train_classifier.py`, `tests/test_baseline_model.py`
+**Files changed:** `src/features/rep_features.py`, `src/models/*`, `src/training/*`, `src/inference/rep_classifier.py`, `configs/training/baseline.yaml`, `scripts/train_classifier.py`, `scripts/bootstrap_labels.py`, `scripts/predict_rep_quality.py`, `docs/MODELS.md`
+
+**Implemented:** Exercise-scalable rep features, gradient boosting pipeline with one-hot exercise, group split by video, weak-label bootstrap, metrics + confusion matrix.
+
+**How to test:**
+```bash
+pytest tests/test_baseline_model.py -v
+python scripts/bootstrap_labels.py
+python scripts/train_classifier.py --demo
+python scripts/predict_rep_quality.py sample_squat
+```
+
+**Commit message:**
+```
+feat(models): add scalable sklearn baseline for multi-exercise rep form quality
+```
+
+---
+
+## Phase 8 — Deep learning sequence model (next)
+
+**Planned files:** `src/models/sequence_lstm.py`, `src/training/train_sequence.py`, `scripts/train_sequence.py`
 
 **Commit message (suggested):**
 ```
-feat(models): add sklearn baseline classifier for rep form quality
+feat(models): add LSTM sequence classifier for rep-level form quality
 ```

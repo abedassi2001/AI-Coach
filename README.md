@@ -92,6 +92,16 @@ python scripts/analyze_form.py sample_squat
 
 Output: `data/processed/analysis/<video_id>/form_analysis.json` with per-rep scores and coaching messages.
 
+## ML baseline (Phase 7)
+
+```bash
+python scripts/bootstrap_labels.py
+python scripts/train_classifier.py --demo
+python scripts/predict_rep_quality.py sample_squat
+```
+
+See [docs/MODELS.md](docs/MODELS.md) for scalable multi-exercise design.
+
 ## Development phases
 
 | Phase | Focus | Status |
@@ -102,7 +112,7 @@ Output: `data/processed/analysis/<video_id>/form_analysis.json` with per-rep sco
 | 4 | Feature engineering | ✅ Done |
 | 5 | Rep segmentation | ✅ Done |
 | 6 | Rule-based form analyzer | ✅ Done |
-| 7 | ML baseline classifier | Pending |
+| 7 | ML baseline classifier | ✅ Done |
 | 8 | Deep learning sequence model | Pending |
 | 9 | Feedback generation | Pending |
 | 10 | Demo app | Pending |

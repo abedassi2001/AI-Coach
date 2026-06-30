@@ -1,0 +1,26 @@
+# Baseline classifier training (Phase 7+)
+# Exercise-agnostic rep-level form quality model
+
+model:
+  type: gradient_boosting  # gradient_boosting | random_forest | logistic
+  random_state: 42
+
+labels:
+  path: data/raw/labels/rep_labels.csv
+  label_column: label
+  positive_class: good
+  negative_class: bad
+
+training:
+  test_size: 0.2
+  min_samples: 8
+  group_column: source_id  # split by video — no leakage across reps
+  use_weak_labels: true    # bootstrap from rule engine if CSV missing rows
+
+features:
+  # Aggregations applied to each numeric per-frame column within a rep
+  aggregations: [min, max, mean, std, at_bottom]
+
+paths:
+  checkpoint_dir: models/checkpoints/baseline
+  reports_dir: models/checkpoints/baseline/reports
