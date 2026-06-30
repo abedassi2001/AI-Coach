@@ -1,0 +1,38 @@
+# Default configuration for AI Gym Form Coach
+# Override per-environment in configs/data/ or via CLI args
+
+project:
+  name: ai-gym-form-coach
+  version: 0.1.0
+  exercise: squat  # MVP focus
+
+video:
+  target_fps: 30
+  max_width: 1280
+  max_height: 720
+  sample_frame_dir: data/interim/sample_frames
+
+pose:
+  backend: mediapipe  # mediapipe | yolo
+  min_detection_confidence: 0.5
+  min_tracking_confidence: 0.5
+  output_format: json  # json | csv
+
+features:
+  normalize_by: torso_length  # torso_length | hip_shoulder
+  smoothing_window: 5
+
+repetition:
+  min_rep_duration_sec: 1.0
+  knee_angle_bottom_threshold: 100  # degrees — squat depth heuristic
+
+form_rules:
+  min_depth_knee_angle: 90
+  max_torso_lean_deg: 45
+  knee_valgus_threshold: 0.15  # normalized hip-knee-ankle deviation
+
+paths:
+  raw_videos: data/raw/videos
+  pose_keypoints: data/processed/pose
+  features: data/processed/features
+  models: models/checkpoints
