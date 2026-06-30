@@ -64,8 +64,10 @@ data/processed/**
 
 models/checkpoints/**
 models/exports/**
+models/pose/*.task
 !models/checkpoints/.gitkeep
 !models/exports/.gitkeep
+!models/pose/.gitkeep
 
 # Logs and outputs
 logs/
