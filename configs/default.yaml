@@ -29,7 +29,9 @@ repetition:
 form_rules:
   min_depth_knee_angle: 90
   max_torso_lean_deg: 45
-  knee_valgus_threshold: 0.15  # normalized hip-knee-ankle deviation
+  max_knee_asymmetry_deg: 15
+  max_knee_angle_std: 25
+  knee_valgus_threshold: 0.15
 
 paths:
   raw_videos: data/raw/videos

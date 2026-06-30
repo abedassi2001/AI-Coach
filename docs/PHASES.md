@@ -112,11 +112,30 @@ feat(features): segment squat repetitions from knee angle time series
 
 ---
 
-## Phase 6 — Rule-based form analyzer (next)
+## Phase 6 — Rule-based form analyzer ✅
 
-**Planned files:** `src/feedback/rules_engine.py` or `src/features/form_analyzer.py`, `scripts/analyze_form.py`, `tests/test_form_rules.py`
+**Files changed:** `src/feedback/form_analyzer.py`, `src/feedback/templates.py`, `scripts/analyze_form.py`, `tests/test_form_rules.py`
+
+**Implemented:** Depth, lean, asymmetry, instability, heel lift, valgus proxy rules; form score; templated feedback messages.
+
+**How to test:**
+```bash
+pytest tests/test_form_rules.py -v
+python scripts/analyze_form.py sample_squat
+```
+
+**Commit message:**
+```
+feat(feedback): add rule-based squat form analysis and coaching messages
+```
+
+---
+
+## Phase 7 — ML baseline classifier (next)
+
+**Planned files:** `src/models/baseline_classifier.py`, `src/training/train_baseline.py`, `scripts/train_classifier.py`, `tests/test_baseline_model.py`
 
 **Commit message (suggested):**
 ```
-feat(feedback): add rule-based squat form mistake detection
+feat(models): add sklearn baseline classifier for rep form quality
 ```

@@ -84,6 +84,14 @@ python scripts/segment_reps.py data/processed/features/sample_squat/features.csv
 
 Output: `data/processed/reps/<video_id>/reps.json` with rep boundaries and phases.
 
+## Form analysis (Phase 6)
+
+```bash
+python scripts/analyze_form.py sample_squat
+```
+
+Output: `data/processed/analysis/<video_id>/form_analysis.json` with per-rep scores and coaching messages.
+
 ## Development phases
 
 | Phase | Focus | Status |
@@ -93,7 +101,7 @@ Output: `data/processed/reps/<video_id>/reps.json` with rep boundaries and phase
 | 3 | Pose extraction | ✅ Done |
 | 4 | Feature engineering | ✅ Done |
 | 5 | Rep segmentation | ✅ Done |
-| 6 | Rule-based form analyzer | Pending |
+| 6 | Rule-based form analyzer | ✅ Done |
 | 7 | ML baseline classifier | Pending |
 | 8 | Deep learning sequence model | Pending |
 | 9 | Feedback generation | Pending |

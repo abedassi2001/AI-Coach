@@ -1,0 +1,83 @@
+"""Tests for rule-based form analysis (Phase 6)."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import pytest
+
+from src.features.feature_pipeline import FrameFeatures
+from src.features.rep_segmentation import Repetition
+from src.feedback.form_analyzer import SquatFormAnalyzer
+
+
+def _bottom_frame(knee_min: float, lean: float, asym: float) -> FrameFeatures:
+    return FrameFeatures(
+        frame_index=10,
+        timestamp_sec=1.0,
+        angles={"torso_lean": lean},
+        derived={"knee_angle_min": knee_min, "knee_asymmetry_deg": asym},
+        torso_length=0.15,
+    )
+
+
+def test_depth_rule_flags_shallow_squat():
+    analyzer = SquatFormAnalyzer(rules={"min_depth_knee_angle": 90})
+    rep = Repetition(
+        rep_id=1,
+        start_frame=0,
+        end_frame=20,
+        bottom_frame=10,
+        start_time_sec=0.0,
+        end_time_sec=2.0,
+        duration_sec=2.0,
+        bottom_knee_angle=110.0,
+    )
+    frames = [
+        FrameFeatures(0, 0.0, {}, {"knee_angle_min": 160.0}),
+        _bottom_frame(110.0, 20.0, 5.0),
+        FrameFeatures(20, 2.0, {}, {"knee_angle_min": 150.0}),
+    ]
+    result = analyzer.analyze_rep(rep, frames)
+    ids = [m.mistake_id for m in result.mistakes]
+    assert "insufficient_depth" in ids
+
+
+def test_good_depth_no_depth_flag():
+    analyzer = SquatFormAnalyzer(rules={"min_depth_knee_angle": 90})
+    rep = Repetition(
+        rep_id=1,
+        start_frame=0,
+        end_frame=20,
+        bottom_frame=10,
+        start_time_sec=0.0,
+        end_time_sec=2.0,
+        duration_sec=2.0,
+        bottom_knee_angle=80.0,
+    )
+    frames = [_bottom_frame(80.0, 20.0, 5.0)]
+    result = analyzer.analyze_rep(rep, frames)
+    assert "insufficient_depth" not in [m.mistake_id for m in result.mistakes]
+
+
+def test_forward_lean_rule():
+    analyzer = SquatFormAnalyzer(rules={"max_torso_lean_deg": 30})
+    rep = Repetition(
+        rep_id=1, start_frame=0, end_frame=10, bottom_frame=5,
+        start_time_sec=0.0, end_time_sec=1.0, duration_sec=1.0, bottom_knee_angle=85.0,
+    )
+    frames = [_bottom_frame(85.0, lean=50.0, asym=5.0)]
+    result = analyzer.analyze_rep(rep, frames)
+    assert "excessive_forward_lean" in [m.mistake_id for m in result.mistakes]
+
+
+def test_analyze_sample_pipeline():
+    features = Path("data/processed/features/sample_squat/features.csv")
+    reps = Path("data/processed/reps/sample_squat/reps.json")
+    if not features.exists() or not reps.exists():
+        pytest.skip("run feature + rep pipeline first")
+
+    analyzer = SquatFormAnalyzer()
+    result = analyzer.analyze(features, reps)
+    assert result.output_dir.joinpath("form_analysis.json").exists()
+    assert len(result.rep_analyses) >= 1
