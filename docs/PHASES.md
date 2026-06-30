@@ -28,11 +28,33 @@ requirements, and gitignore for squat-form MVP pipeline.
 
 ---
 
-## Phase 2 — Video processing (next)
+## Phase 2 — Video processing ✅
 
-**Planned files:** `src/data/video_loader.py`, `src/data/frame_extractor.py`, `src/utils/config.py`, `scripts/extract_frames.py`, `tests/test_video.py`
+**Files changed:** `src/utils/config.py`, `src/data/video_loader.py`, `src/data/frame_extractor.py`, `scripts/extract_frames.py`, `tests/conftest.py`, `tests/test_video.py`
+
+**Implemented:** YAML config loader, OpenCV video metadata, FPS-aware frame sampling, aspect-ratio resize, frame export + JSON manifest, CLI script.
+
+**How to test:**
+```bash
+pytest tests/test_video.py -v
+
+# With your own squat video:
+python scripts/extract_frames.py path/to/squat.mp4
+python scripts/extract_frames.py path/to/squat.mp4 --max-frames 10
+```
+
+**Commit message:**
+```
+feat(data): add video loading and frame extraction pipeline
+```
+
+---
+
+## Phase 3 — Pose extraction (next)
+
+**Planned files:** `src/pose/mediapipe_estimator.py`, `src/pose/keypoint_schema.py`, `scripts/extract_pose.py`, `tests/test_pose.py`
 
 **Commit message (suggested):**
 ```
-feat(data): add video loading and frame extraction pipeline
+feat(pose): add MediaPipe keypoint extraction and skeleton overlay
 ```

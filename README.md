@@ -60,8 +60,8 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full pipeline and [docs
 
 | Phase | Focus | Status |
 |-------|--------|--------|
-| 1 | Repository setup | ✅ Current |
-| 2 | Video processing | Pending |
+| 1 | Repository setup | ✅ Done |
+| 2 | Video processing | ✅ Done |
 | 3 | Pose extraction | Pending |
 | 4 | Feature engineering | Pending |
 | 5 | Rep segmentation | Pending |
