@@ -79,6 +79,15 @@ class RepSegmentationResult:
         return out
 
 
+def _safe_float(val: str | float | None) -> float:
+    if val is None or val == "":
+        return float("nan")
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return float("nan")
+
+
 def load_frame_features_from_csv(path: str | Path) -> tuple[str, str, list[FrameFeatures]]:
     """Load features.csv produced by Phase 4."""
     path = Path(path)
@@ -94,21 +103,28 @@ def load_frame_features_from_csv(path: str | Path) -> tuple[str, str, list[Frame
             derived = {}
             for key, val in row.items():
                 if key.startswith("angle_"):
-                    angles[key.removeprefix("angle_")] = float(val)
+                    angles[key.removeprefix("angle_")] = _safe_float(val)
                 elif key in (
                     "knee_angle_avg",
                     "knee_angle_min",
                     "knee_asymmetry_deg",
                     "hip_angle_avg",
+                    "squat_depth_angle",
+                    "hip_drop_norm",
+                    "shoulder_hip_span",
+                    "hip_width_norm",
+                    "shoulder_width_norm",
+                    "camera_frontality",
+                    "knee_from_hip_proxy",
                 ):
-                    derived[key] = float(val)
+                    derived[key] = _safe_float(val)
             frames.append(
                 FrameFeatures(
                     frame_index=int(row["frame_index"]),
-                    timestamp_sec=float(row["timestamp_sec"]),
+                    timestamp_sec=_safe_float(row["timestamp_sec"]),
                     angles=angles,
                     derived=derived,
-                    torso_length=float(row.get("torso_length", "nan")),
+                    torso_length=_safe_float(row.get("torso_length", "nan")),
                 )
             )
     return source_id, exercise, frames
@@ -132,8 +148,17 @@ def load_frame_features_from_json(path: str | Path) -> tuple[str, str, list[Fram
     return data["source_id"], data["exercise"], frames
 
 
-def extract_signal(frames: list[FrameFeatures], column: str = "knee_angle_min") -> list[float]:
-    """Build 1D signal for rep detection (lower = deeper squat for knee angles)."""
+def extract_signal(frames: list[FrameFeatures], column: str = "squat_depth_angle") -> list[float]:
+    """Build 1D signal for rep detection (lower = deeper squat)."""
+    if column == "squat_depth_angle":
+        series = [
+            fr.derived.get("squat_depth_angle", fr.derived.get("knee_angle_min", float("nan")))
+            for fr in frames
+        ]
+        if any(v == v for v in series):
+            return series
+        column = "knee_angle_min"
+
     values: list[float] = []
     for fr in frames:
         if column in fr.derived:

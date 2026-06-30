@@ -1,0 +1,33 @@
+# Coaching feedback (Phase 9) — FREE by default, no API key required
+#
+# Providers:
+#   template  — always free, built-in smart coach (default)
+#   ollama    — free local AI if you install Ollama (https://ollama.com)
+#   openai    — paid API (optional, needs OPENAI_API_KEY)
+
+provider: template  # template | ollama | openai | auto
+
+# Free local LLM via Ollama (install: https://ollama.com then: ollama pull llama3.2)
+ollama:
+  base_url: http://localhost:11434
+  model: llama3.2
+  temperature: 0.4
+  timeout_sec: 120
+
+# Optional paid cloud (only if you have a key)
+openai:
+  model: gpt-4o-mini
+  temperature: 0.4
+  max_tokens: 1200
+
+coaching:
+  language: en
+  max_action_items: 5
+  include_rep_details: true
+
+paths:
+  output_dir: data/processed/coaching
+
+disclaimer: >
+  This is fitness technique feedback from pose estimation and movement analysis,
+  not medical advice. Consult a qualified coach or clinician for pain or injury.

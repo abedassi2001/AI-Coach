@@ -1,0 +1,94 @@
+# Curated web squat dataset for baseline classifier training
+# Sources: Mixkit (free license) — https://mixkit.co/license/
+#
+# Labels are human-curated from video content (form quality), not rule engine.
+# holdout=true videos are excluded from training labels.
+
+videos:
+    # Holdout for generalization testing (excluded from rep_labels.csv).
+  - source_id: holdout_squat_gym
+    url: https://assets.mixkit.co/videos/52116/52116-720.mp4
+    quality: good
+    camera: front
+    notes: "Front-view gym squat, Mixkit #52116"
+
+  # --- GOOD form (side / 3-4 view, full depth) ---
+  - source_id: sample_squat
+    url: null  # already in data/raw/videos/sample_squat.mp4
+    quality: good
+    camera: side
+    notes: "Goblet squat with medicine ball, Mixkit #752"
+
+  - source_id: good_goblet_52106
+    url: https://assets.mixkit.co/videos/52106/52106-720.mp4
+    quality: good
+    camera: side
+    notes: "Russian dumbbell squat, described as perfect form, Mixkit #52106"
+
+  - source_id: good_dumbbell_52111
+    url: https://assets.mixkit.co/videos/52111/52111-720.mp4
+    quality: good
+    camera: side
+    notes: "Dumbbell squat, controlled depth, Mixkit #52111"
+
+  # --- BAD form (shallow, rushed, or clearly limited ROM) ---
+  - source_id: bad_gym_shallow_48677
+    url: https://assets.mixkit.co/videos/48677/48677-720.mp4
+    quality: bad
+    camera: side
+    notes: "Gym squat with limited depth / partial ROM, Mixkit #48677"
+
+  - source_id: bad_combo_52099
+    url: https://assets.mixkit.co/videos/52099/52099-720.mp4
+    quality: bad
+    camera: side
+    holdout: true
+    notes: "Fast combo squat+dumbbell, rushed shallow reps — holdout test, Mixkit #52099"
+
+  - source_id: bad_barbell_40747
+    url: https://assets.mixkit.co/videos/40747/40747-720.mp4
+    quality: bad
+    camera: side
+    notes: "Barbell squat with limited depth and forward lean, Mixkit #40747"
+
+  - source_id: bad_home_21273
+    url: https://assets.mixkit.co/videos/21273/21273-720.mp4
+    quality: bad
+    camera: front
+    notes: "Man doing squats at home — limited depth / casual form, Mixkit #21273"
+
+  - source_id: bad_gym_woman_23913
+    url: https://assets.mixkit.co/videos/23913/23913-720.mp4
+    quality: bad
+    camera: side
+    notes: "Gym squat, beginner-style partial ROM, Mixkit #23913"
+
+  - source_id: bad_trainer_23914
+    url: https://assets.mixkit.co/videos/23914/23914-720.mp4
+    quality: bad
+    camera: side
+    notes: "Trainer-assisted squat — hesitant shallow reps, Mixkit #23914"
+
+  - source_id: bad_mother_49038
+    url: https://assets.mixkit.co/videos/49038/49038-720.mp4
+    quality: bad
+    camera: front
+    notes: "Mother/daughter squat reps — shallow home workout, Mixkit #49038"
+
+  - source_id: bad_squat_baby_36062
+    url: https://assets.mixkit.co/videos/36062/36062-720.mp4
+    quality: bad
+    camera: side
+    notes: "Squats holding baby — compromised form and depth, Mixkit #36062"
+
+  - source_id: bad_man_combo_52082
+    url: https://assets.mixkit.co/videos/52082/52082-720.mp4
+    quality: bad
+    camera: side
+    notes: "Rushed squat+dumbbell combo, Mixkit #52082"
+
+  - source_id: bad_couple_44438
+    url: https://assets.mixkit.co/videos/44438/44438-720.mp4
+    quality: bad
+    camera: side
+    notes: "Fast couple squats — short ROM, Mixkit #44438"

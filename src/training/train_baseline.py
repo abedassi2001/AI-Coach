@@ -71,10 +71,22 @@ def train_baseline_classifier(
     builder = RepDatasetBuilder()
     df = builder.labeled_only(builder.build(source_ids=source_ids))
 
-    if demo_augment and len(df) < min_samples and len(df) > 0:
+    if demo_augment and len(df) > 0:
         from src.training.synthetic import augment_labeled_reps
 
-        df = augment_labeled_reps(df, target_size=max(min_samples, 20))
+        aug_mode = train_cfg.get("demo_augmentation", "contrastive")
+        target_size = int(train_cfg.get("demo_target_size", max(min_samples, 36)))
+        variants = int(train_cfg.get("bad_variants_per_rep", 5))
+        if len(df) >= min_samples and df["label"].nunique() >= 2:
+            target_size = max(len(df) + 8, min_samples)
+            variants = min(variants, 2)
+        if len(df) < min_samples or aug_mode == "contrastive":
+            df = augment_labeled_reps(
+                df,
+                target_size=max(target_size, min_samples),
+                mode=aug_mode,
+                variants_per_rep=variants,
+            )
 
     if len(df) < min_samples:
         raise ValueError(

@@ -25,6 +25,7 @@ features:
 repetition:
   min_rep_duration_sec: 1.0
   knee_angle_bottom_threshold: 100  # degrees — squat depth heuristic
+  signal_column: squat_depth_angle   # camera-robust depth signal (falls back in code)
 
 form_rules:
   min_depth_knee_angle: 90

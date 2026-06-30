@@ -28,6 +28,9 @@ matplotlib>=3.7.0
 seaborn>=0.12.0
 pillow>=10.0.0
 
+# LLM coaching (Phase 9) — optional; built-in coach works without this
+# openai>=1.30.0
+
 # Testing & dev
 pytest>=7.4.0
 pytest-cov>=4.1.0

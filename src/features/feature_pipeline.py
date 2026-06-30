@@ -8,8 +8,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from src.features.angles import compute_configured_angles, compute_derived_features
-from src.features.normalization import compute_body_scale
+from src.features.angles import compute_configured_angles, compute_derived_features, resolve_landmark
+from src.features.normalization import compute_body_scale, midpoint
 from src.pose.keypoint_schema import Keypoint, PoseFrame, PoseSequence
 from src.utils.config import load_config, resolve_path
 from src.utils.exercise_config import load_exercise_config
@@ -111,6 +111,8 @@ class FeatureExtractionPipeline:
         ex_cfg = load_exercise_config(exercise)
         angle_defs = ex_cfg.get("angles", [])
 
+        baseline_hip_y = self._baseline_hip_y(sequence.frames)
+
         frame_features: list[FrameFeatures] = []
         for pose_frame in sequence.frames:
             scale = compute_body_scale(pose_frame, method=self.normalize_by)
@@ -118,6 +120,7 @@ class FeatureExtractionPipeline:
 
             angles = compute_configured_angles(pose_frame, angle_defs)
             derived = compute_derived_features(angles)
+            derived.update(self._hip_drop_features(pose_frame, baseline_hip_y, torso_len))
 
             frame_features.append(
                 FrameFeatures(
@@ -134,21 +137,59 @@ class FeatureExtractionPipeline:
 
         return frame_features
 
+    @staticmethod
+    def _baseline_hip_y(frames: list[PoseFrame], n: int = 8) -> float:
+        """Standing hip height reference from opening frames (image y, downward +)."""
+        ys: list[float] = []
+        for pose_frame in frames[:n]:
+            mid_hip = resolve_landmark("mid_hip", pose_frame.landmarks)
+            if mid_hip is not None:
+                ys.append(mid_hip.y)
+        if not ys:
+            return float("nan")
+        return sum(ys) / len(ys)
+
+    @staticmethod
+    def _hip_drop_features(
+        pose_frame: PoseFrame,
+        baseline_hip_y: float,
+        torso_len: float,
+    ) -> dict[str, float]:
+        """Normalized vertical hip travel — works for front and side cameras."""
+        out: dict[str, float] = {}
+        mid_hip = resolve_landmark("mid_hip", pose_frame.landmarks)
+        if mid_hip is None or baseline_hip_y != baseline_hip_y or torso_len <= 0:
+            return out
+        out["hip_drop_norm"] = (mid_hip.y - baseline_hip_y) / torso_len
+        mid_shoulder = resolve_landmark("mid_shoulder", pose_frame.landmarks)
+        if mid_shoulder is not None:
+            out["shoulder_hip_span"] = (mid_hip.y - mid_shoulder.y) / torso_len
+        lm = pose_frame.landmarks
+        if "left_hip" in lm and "right_hip" in lm:
+            out["hip_width_norm"] = abs(lm["left_hip"].x - lm["right_hip"].x) / torso_len
+        if "left_shoulder" in lm and "right_shoulder" in lm:
+            out["shoulder_width_norm"] = abs(lm["left_shoulder"].x - lm["right_shoulder"].x) / torso_len
+        if "hip_width_norm" in out and out["hip_width_norm"] > 1e-6:
+            sw = out.get("shoulder_width_norm", out["hip_width_norm"])
+            out["camera_frontality"] = sw / out["hip_width_norm"]
+        return out
+
     def _apply_smoothing(self, frame_features: list[FrameFeatures]) -> None:
         if not frame_features:
             return
         angle_keys = list(frame_features[0].angles.keys())
-        derived_keys = list(frame_features[0].derived.keys())
+        derived_keys: set[str] = set()
+        for ff in frame_features:
+            derived_keys.update(ff.derived.keys())
 
         for key in angle_keys:
-            col = f"angle_{key}"
-            series = [ff.angles[key] for ff in frame_features]
+            series = [ff.angles.get(key, float("nan")) for ff in frame_features]
             smoothed = smooth_series(series, self.smoothing_window)
             for ff, val in zip(frame_features, smoothed):
                 ff.angles[key] = val
 
-        for key in derived_keys:
-            series = [ff.derived[key] for ff in frame_features]
+        for key in sorted(derived_keys):
+            series = [ff.derived.get(key, float("nan")) for ff in frame_features]
             smoothed = smooth_series(series, self.smoothing_window)
             for ff, val in zip(frame_features, smoothed):
                 ff.derived[key] = val
@@ -194,7 +235,13 @@ class FeatureExtractionPipeline:
             path.write_text("", encoding="utf-8")
             return
         rows = [f.to_flat_dict(source_id, exercise) for f in frames]
-        fieldnames = list(rows[0].keys())
+        fieldnames: list[str] = []
+        seen: set[str] = set()
+        for row in rows:
+            for key in row:
+                if key not in seen:
+                    seen.add(key)
+                    fieldnames.append(key)
         with path.open("w", encoding="utf-8", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
