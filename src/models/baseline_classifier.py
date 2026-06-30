@@ -9,6 +9,7 @@ from typing import Any
 import joblib
 import numpy as np
 import pandas as pd
+from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -68,7 +69,16 @@ class BaselineFormClassifier(FormClassifier):
 
         preprocessor = ColumnTransformer(
             transformers=[
-                ("num", StandardScaler(), numeric),
+                (
+                    "num",
+                    Pipeline(
+                        [
+                            ("imputer", SimpleImputer(strategy="median")),
+                            ("scaler", StandardScaler()),
+                        ]
+                    ),
+                    numeric,
+                ),
                 (
                     "cat",
                     OneHotEncoder(handle_unknown="ignore", sparse_output=False),
@@ -91,11 +101,23 @@ class BaselineFormClassifier(FormClassifier):
             return pd.DataFrame(X)
         raise TypeError("X must be DataFrame or list of dicts")
 
+    def _prepare_matrix(self, X: Any) -> pd.DataFrame:
+        df = self._to_dataframe(X)
+        cols = self.feature_columns + self.categorical_columns
+        for col in cols:
+            if col not in df.columns:
+                df[col] = np.nan
+        out = df[cols].copy()
+        for col in self.feature_columns:
+            out[col] = pd.to_numeric(out[col], errors="coerce")
+        return out
+
     def fit(self, X: Any, y: Any, groups: Any | None = None) -> None:
         df = self._to_dataframe(X)
         if not self.feature_columns:
             exclude = {
                 "source_id", "rep_id", "label", "weak_label", "synthetic",
+                "synthetic_mistake", "label_source",
                 *self.categorical_columns,
             }
             self.feature_columns = [
@@ -104,20 +126,19 @@ class BaselineFormClassifier(FormClassifier):
                 if c not in exclude and pd.api.types.is_numeric_dtype(df[c])
             ]
         self.pipeline = self._build_pipeline()
-        self.pipeline.fit(df[self.feature_columns + self.categorical_columns], y)
+        matrix = self._prepare_matrix(df)
+        self.pipeline.fit(matrix, y)
         self.classes_ = list(self.pipeline.named_steps["clf"].classes_)
 
     def predict(self, X: Any) -> np.ndarray:
         if self.pipeline is None:
             raise RuntimeError("Model not fitted")
-        df = self._to_dataframe(X)
-        return self.pipeline.predict(df[self.feature_columns + self.categorical_columns])
+        return self.pipeline.predict(self._prepare_matrix(X))
 
     def predict_proba(self, X: Any) -> np.ndarray:
         if self.pipeline is None:
             raise RuntimeError("Model not fitted")
-        df = self._to_dataframe(X)
-        return self.pipeline.predict_proba(df[self.feature_columns + self.categorical_columns])
+        return self.pipeline.predict_proba(self._prepare_matrix(X))
 
     def save(self, path: str) -> None:
         if self.pipeline is None:

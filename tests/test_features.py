@@ -39,6 +39,14 @@ def test_midpoint():
     assert m.y == pytest.approx(2.0)
 
 
+def test_knee_artifact_clamped_to_hip_proxy():
+    derived = compute_derived_features(
+        {"left_knee": 6.0, "right_knee": 8.0, "left_hip": 95.0, "right_hip": 92.0}
+    )
+    assert derived["knee_from_hip_proxy"] == 1.0
+    assert derived["squat_depth_angle"] == pytest.approx(92.0)
+
+
 def test_torso_length():
     frame = PoseFrame(
         frame_index=0,

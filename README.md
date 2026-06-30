@@ -102,6 +102,36 @@ python scripts/predict_rep_quality.py sample_squat
 
 See [docs/MODELS.md](docs/MODELS.md) for scalable multi-exercise design.
 
+## AI coaching feedback (Phase 9) — **free by default**
+
+Actionable cues from your analysis. **No API key or payment required.**
+
+```bash
+# Free built-in coach (default)
+python scripts/generate_coaching.py sample_squat
+
+# Optional: free local AI via Ollama (install from ollama.com)
+python scripts/generate_coaching.py sample_squat --provider ollama
+
+# With annotated video
+python scripts/visualize_evaluation.py sample_squat --coaching
+```
+
+Output: `data/processed/coaching/<video_id>/coaching_report.txt`
+
+See [docs/COACHING.md](docs/COACHING.md). Paid OpenAI is optional only if you add a key later.
+
+## Demo app (Phase 10)
+
+Interactive UI to upload a squat video and review the full pipeline:
+
+```bash
+python scripts/run_app.py
+# or: streamlit run app/streamlit_app.py
+```
+
+Opens a browser at `http://localhost:8501` — upload a video or pick a sample, then view annotated video, charts, and coaching text. **No API key required** (free template coach by default).
+
 ## Development phases
 
 | Phase | Focus | Status |
@@ -114,8 +144,8 @@ See [docs/MODELS.md](docs/MODELS.md) for scalable multi-exercise design.
 | 6 | Rule-based form analyzer | ✅ Done |
 | 7 | ML baseline classifier | ✅ Done |
 | 8 | Deep learning sequence model | Pending |
-| 9 | Feedback generation | Pending |
-| 10 | Demo app | Pending |
+| 9 | Feedback generation | ✅ Done |
+| 10 | Demo app (Streamlit) | ✅ Done |
 
 ## Quick start
 

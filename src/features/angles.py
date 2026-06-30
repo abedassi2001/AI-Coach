@@ -71,23 +71,43 @@ def compute_configured_angles(
     return results
 
 
+def _valid_knee_angle(value: float, min_deg: float = 35.0, max_deg: float = 175.0) -> bool:
+    """Reject frontal-view / collinearity artifacts (e.g. 6 deg 'depth')."""
+    return value == value and min_deg <= value <= max_deg
+
+
 def compute_derived_features(angles: dict[str, float]) -> dict[str, float]:
     """Extra scalar features built from primary angles (squat-focused, reusable)."""
     left_k = angles.get("left_knee", float("nan"))
     right_k = angles.get("right_knee", float("nan"))
-    knee_values = [v for v in (left_k, right_k) if not math.isnan(v)]
-
-    derived: dict[str, float] = {}
-    if knee_values:
-        derived["knee_angle_avg"] = sum(knee_values) / len(knee_values)
-        derived["knee_angle_min"] = min(knee_values)
-    if not math.isnan(left_k) and not math.isnan(right_k):
-        derived["knee_asymmetry_deg"] = abs(left_k - right_k)
+    valid_knees = [v for v in (left_k, right_k) if _valid_knee_angle(v)]
 
     left_h = angles.get("left_hip", float("nan"))
     right_h = angles.get("right_hip", float("nan"))
     hip_values = [v for v in (left_h, right_h) if not math.isnan(v)]
+    hip_avg = sum(hip_values) / len(hip_values) if hip_values else float("nan")
+
+    derived: dict[str, float] = {}
+    if valid_knees:
+        derived["knee_angle_avg"] = sum(valid_knees) / len(valid_knees)
+        derived["knee_angle_min"] = min(valid_knees)
+    elif hip_values:
+        # Frontal / occluded knees: hip flexion tracks depth reasonably well.
+        derived["knee_angle_avg"] = hip_avg
+        derived["knee_angle_min"] = min(hip_values)
+        derived["knee_from_hip_proxy"] = 1.0
+
+    if not math.isnan(left_k) and not math.isnan(right_k):
+        derived["knee_asymmetry_deg"] = abs(left_k - right_k)
+
     if hip_values:
-        derived["hip_angle_avg"] = sum(hip_values) / len(hip_values)
+        derived["hip_angle_avg"] = hip_avg
+
+    # Depth signal for rep segmentation + ML — knees first; hips only if knees unreliable.
+    if valid_knees:
+        derived["squat_depth_angle"] = min(valid_knees)
+    elif hip_values:
+        derived["squat_depth_angle"] = min(hip_values)
+        derived["knee_from_hip_proxy"] = 1.0
 
     return derived

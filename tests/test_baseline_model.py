@@ -55,6 +55,28 @@ def test_baseline_classifier_fit_predict():
     assert len(preds) == 2
 
 
+def test_contrastive_augment_preserves_good_labels():
+    rows = [
+        {
+            "source_id": "sample_squat",
+            "exercise": "squat",
+            "rep_id": 1,
+            "label": "good",
+            "rep_bottom_knee_angle": 72.0,
+            "rep_knee_angle_min_at_bottom": 70.0,
+            "rep_knee_asymmetry_deg_at_bottom": 12.0,
+            "rep_angle_torso_lean_at_bottom": 20.0,
+            "rep_knee_angle_min_std": 8.0,
+        }
+    ]
+    df = augment_labeled_reps(pd.DataFrame(rows), target_size=12, mode="contrastive", variants_per_rep=3)
+    good = df[df["label"] == "good"]
+    bad = df[df["label"] == "bad"]
+    assert len(good) >= 1
+    assert len(bad) >= 3
+    assert "synthetic_mistake" in bad.columns or bad["synthetic"].any()
+
+
 def test_train_baseline_with_synthetic_augment(tmp_path, monkeypatch):
     """End-to-end train on tiny synthetic set."""
     rows = []
@@ -70,7 +92,7 @@ def test_train_baseline_with_synthetic_augment(tmp_path, monkeypatch):
                 "label": "good" if i % 2 == 0 else "bad",
             }
         )
-    df = augment_labeled_reps(pd.DataFrame(rows), target_size=20)
+    df = augment_labeled_reps(pd.DataFrame(rows), target_size=20, mode="noise")
 
     def fake_build(self, source_ids=None):
         return df

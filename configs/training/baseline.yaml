@@ -16,6 +16,9 @@ training:
   min_samples: 8
   group_column: source_id  # split by video — no leakage across reps
   use_weak_labels: true    # bootstrap from rule engine if CSV missing rows
+  demo_augmentation: contrastive  # contrastive | noise
+  demo_target_size: 36
+  bad_variants_per_rep: 5
 
 features:
   # Aggregations applied to each numeric per-frame column within a rep

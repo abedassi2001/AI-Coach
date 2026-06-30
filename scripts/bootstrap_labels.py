@@ -7,11 +7,13 @@ import argparse
 import sys
 from pathlib import Path
 
+import pandas as pd
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.training.rep_dataset import RepDatasetBuilder, discover_processed_sources
+from src.training.rep_dataset import RepDatasetBuilder, discover_processed_sources, load_label_table
 
 
 def main() -> int:
@@ -22,6 +24,11 @@ def main() -> int:
         type=Path,
         default=Path("data/raw/labels/rep_labels.csv"),
     )
+    parser.add_argument(
+        "--overwrite-human",
+        action="store_true",
+        help="Replace human-labeled rows (default: human labels are preserved)",
+    )
     args = parser.parse_args()
 
     builder = RepDatasetBuilder()
@@ -31,14 +38,38 @@ def main() -> int:
         print("No processed reps found. Run pose → features → reps pipeline first.", file=sys.stderr)
         return 1
 
-    out = df[["source_id", "exercise", "rep_id", "label"]].copy()
+    weak = df[["source_id", "exercise", "rep_id", "label"]].copy()
+    weak["label_source"] = "rules"
+
+    existing = load_label_table(args.output)
+    if not existing.empty and not args.overwrite_human:
+        human = existing[existing.get("label_source", pd.Series(dtype=str)) == "human"]
+        if human.empty and "label_source" not in existing.columns:
+            human = pd.DataFrame()
+        if not human.empty:
+            keys = set(zip(human["source_id"], human["exercise"], human["rep_id"]))
+            mask = ~weak.apply(
+                lambda r: (r["source_id"], r["exercise"], r["rep_id"]) in keys,
+                axis=1,
+            )
+            weak = pd.concat([human, weak[mask]], ignore_index=True)
+            print(f"Preserved {len(human)} human label(s); filled gaps with rules.")
+
     if "weak_label" in df.columns:
-        out["weak_label"] = df["weak_label"]
+        weak_map = {
+            (str(r.source_id), str(r.exercise), int(r.rep_id)): bool(r.weak_label)
+            for r in df.itertuples(index=False)
+            if hasattr(r, "weak_label")
+        }
+        weak["weak_label"] = weak.apply(
+            lambda r: weak_map.get((str(r["source_id"]), str(r["exercise"]), int(r["rep_id"]))),
+            axis=1,
+        )
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    out.to_csv(args.output, index=False)
-    print(f"Wrote {len(out)} labels to {args.output.resolve()}")
-    print(out.to_string(index=False))
+    weak.to_csv(args.output, index=False)
+    print(f"Wrote {len(weak)} labels to {args.output.resolve()}")
+    print(weak.to_string(index=False))
     return 0
 
 
