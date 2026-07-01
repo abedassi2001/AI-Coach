@@ -18,8 +18,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.utils.config import get_project_root
-from src.visualization.evaluation_overlay import (
+from backend.utils.config import get_project_root
+from backend.visualization.evaluation_overlay import (
     build_evaluation_report,
     load_evaluation_artifacts,
     write_evaluation_video,
@@ -193,7 +193,7 @@ def main() -> int:
             print(f"    mistakes: {', '.join(r['mistakes'])}")
 
     if args.coaching:
-        from src.feedback.coaching_pipeline import generate_coaching
+        from backend.feedback.coaching_pipeline import generate_coaching
 
         coaching = generate_coaching(
             source_id,

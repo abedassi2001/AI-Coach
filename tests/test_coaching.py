@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from src.feedback.coach_context import build_coaching_context
-from src.feedback.coaching_pipeline import generate_coaching
-from src.feedback.template_coach import generate_template_coaching
+from backend.feedback.coach_context import build_coaching_context
+from backend.feedback.coaching_pipeline import generate_coaching
+from backend.feedback.template_coach import generate_template_coaching
 
 
 SAMPLE_CONTEXT = {

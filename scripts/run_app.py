@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-APP = PROJECT_ROOT / "app" / "streamlit_app.py"
+APP = PROJECT_ROOT / "frontend" / "streamlit_app.py"
 
 
 def main() -> int:

@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from src.pose.keypoint_schema import Keypoint, PoseFrame, PoseSequence
-from src.utils.exercise_config import list_exercises, load_exercise_config
+from backend.pose.keypoint_schema import Keypoint, PoseFrame, PoseSequence
+from backend.utils.exercise_config import list_exercises, load_exercise_config
 
 
 def test_list_exercises_includes_squat():

@@ -11,9 +11,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.feedback.coaching_pipeline import generate_coaching
-from src.feedback.form_analyzer import SquatFormAnalyzer
-from src.utils.config import resolve_path
+from backend.feedback.coaching_pipeline import generate_coaching
+from backend.feedback.form_analyzer import SquatFormAnalyzer
+from backend.utils.config import resolve_path
 
 
 def parse_args() -> argparse.Namespace:

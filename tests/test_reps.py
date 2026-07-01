@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from src.features.feature_pipeline import FrameFeatures
-from src.features.rep_segmentation import (
+from backend.features.feature_pipeline import FrameFeatures
+from backend.features.rep_segmentation import (
     RepSegmentationPipeline,
     classify_phases,
     extract_signal,

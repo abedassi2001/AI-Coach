@@ -19,9 +19,9 @@ python scripts/extract_pose.py --video deadlift.mp4 --exercise deadlift
 
 | Layer | Scope | Location |
 |-------|--------|----------|
-| Pose detection | All exercises | `src/pose/` |
+| Pose detection | All exercises | `backend/pose/` |
 | Exercise metadata | Per movement | `configs/exercises/*.yaml` |
-| Feature / form rules | Per movement | `src/features/`, Phase 4–6 |
+| Feature / form rules | Per movement | `backend/features/`, Phase 4–6 |
 
 ## Squat (MVP)
 

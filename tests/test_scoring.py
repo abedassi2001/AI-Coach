@@ -4,19 +4,19 @@ from __future__ import annotations
 
 import pytest
 
-from src.feedback.rep_coaching import (
+from backend.feedback.rep_coaching import (
     build_video_summary,
     flags_from_scores,
     generate_rep_coaching,
 )
-from src.feedback.scoring import (
+from backend.feedback.scoring import (
     clamp,
     linear_score,
     quality_label,
     score_angle_range,
     weighted_average,
 )
-from src.feedback.squat_dimensions import score_depth, score_torso_control
+from backend.feedback.squat_dimensions import score_depth, score_torso_control
 
 
 def test_clamp():

@@ -28,33 +28,37 @@ An AI-powered **fitness form assistant** that analyzes gym exercise videos, esti
 
 ```
 AI-Coach/
-├── src/                    # Application source code
-│   ├── data/               # Video loading, frame extraction, dataset I/O
-│   ├── pose/               # Pose estimation (MediaPipe / YOLO)
-│   ├── features/           # Joint angles, normalization, movement features
-│   ├── models/             # Model architectures (ML + deep learning)
-│   ├── training/           # Training loops, metrics, checkpoints
-│   ├── inference/          # End-to-end prediction on new videos
-│   ├── feedback/           # Rule-based + model output → coaching text
-│   ├── visualization/      # Skeleton overlay, charts, annotated frames
-│   └── utils/              # Config loading, logging, geometry helpers
-├── configs/                # YAML configuration files
-├── data/                   # Local data (gitignored contents; structure tracked)
-│   ├── raw/                # Original videos and labels
-│   ├── interim/            # Frames and intermediate artifacts
-│   └── processed/          # Keypoints, features, segmented reps
-├── notebooks/              # Exploratory analysis and prototyping
-├── scripts/                # CLI entry points for batch jobs
-├── tests/                  # Unit and integration tests
-├── app/                    # FastAPI / Streamlit demo (Phase 10)
-├── docs/                   # Documentation, dataset notes, architecture
-├── models/                 # Saved weights and exports (gitignored)
+├── backend/                # Python CV/ML pipeline
+│   ├── data/               # Video loading, frame extraction
+│   ├── pose/               # MediaPipe pose estimation
+│   ├── features/           # Joint angles, rep segmentation
+│   ├── feedback/           # Rule engine, scoring, coaching
+│   ├── inference/          # End-to-end video pipeline
+│   ├── ml/                 # Classifier architectures (code)
+│   ├── training/           # Dataset builders, training, metrics
+│   ├── visualization/      # Skeleton overlay, evaluation videos
+│   └── utils/              # Config, paths, web video helpers
+├── frontend/               # Streamlit UI (Iron Form Coach)
+├── models/                 # Saved weights & pose assets (gitignored)
+├── configs/                # YAML configuration
+├── data/                   # Raw videos, labels, processed artifacts
+├── scripts/                # CLI entry points
+├── tests/                  # Unit & integration tests
+├── docs/                   # Architecture, phases, datasets
+├── pyproject.toml
 ├── requirements.txt
 ├── Dockerfile
 └── README.md
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full pipeline, [docs/DATASETS.md](docs/DATASETS.md) for data licensing, and [docs/EXERCISES.md](docs/EXERCISES.md) for adding new gym movements.
+| Layer | Directory | Role |
+|-------|-----------|------|
+| **Backend** | `backend/` | Pose, features, scoring, inference, training |
+| **Frontend** | `frontend/` | Streamlit upload → analyze → results UI |
+| **Models** | `models/` | Checkpoints on disk (`.joblib`, `.task`) |
+| **ML code** | `backend/ml/` | Classifier implementations (not weights) |
+
+See [backend/README.md](backend/README.md), [frontend/README.md](frontend/README.md), [models/README.md](models/README.md), and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Pose extraction (Phase 3)
 
@@ -138,14 +142,14 @@ Interactive UI to upload a squat video and review the full pipeline:
 
 ```bash
 python scripts/run_app.py
-# or: streamlit run app/streamlit_app.py
+# or: streamlit run frontend/streamlit_app.py
 ```
 
 Opens a browser at `http://localhost:8501`.
 
 **User flow:** upload → analyze → **summary popup** (score, main issue, quick fix) → **View full analysis** for dimension cards and rep breakdown.
 
-See [app/README.md](app/README.md) for UI architecture and screenshots placeholder.
+See [frontend/README.md](frontend/README.md) for UI architecture and screenshots placeholder.
 
 ## Development phases
 

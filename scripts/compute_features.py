@@ -11,8 +11,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.features.feature_pipeline import FeatureExtractionPipeline
-from src.utils.config import load_config, resolve_path
+from backend.features.feature_pipeline import FeatureExtractionPipeline
+from backend.utils.config import load_config, resolve_path
 
 
 def parse_args() -> argparse.Namespace:

@@ -10,7 +10,7 @@ import pytest
 
 def test_create_mediapipe_estimator():
     pytest.importorskip("mediapipe")
-    from src.pose.factory import create_pose_estimator
+    from backend.pose.factory import create_pose_estimator
 
     estimator = create_pose_estimator("mediapipe")
     assert estimator.backend_name == "mediapipe"
@@ -19,7 +19,7 @@ def test_create_mediapipe_estimator():
 
 
 def test_create_unknown_backend_raises():
-    from src.pose.factory import create_pose_estimator
+    from backend.pose.factory import create_pose_estimator
 
     with pytest.raises(ValueError, match="Unknown pose backend"):
         create_pose_estimator("invalid")
@@ -28,7 +28,7 @@ def test_create_unknown_backend_raises():
 def test_mediapipe_estimator_on_blank_frame():
     pytest.importorskip("mediapipe")
     np = pytest.importorskip("numpy")
-    from src.pose.factory import create_pose_estimator
+    from backend.pose.factory import create_pose_estimator
 
     estimator = create_pose_estimator("mediapipe", min_detection_confidence=0.1)
     try:
@@ -42,8 +42,8 @@ def test_mediapipe_estimator_on_blank_frame():
 def test_pose_pipeline_process_frames_dir(tmp_path: Path):
     cv2 = pytest.importorskip("cv2")
     np = pytest.importorskip("numpy")
-    from src.pose.keypoint_schema import Keypoint, PoseFrame
-    from src.pose.pose_pipeline import PoseExtractionPipeline
+    from backend.pose.keypoint_schema import Keypoint, PoseFrame
+    from backend.pose.pose_pipeline import PoseExtractionPipeline
 
     frames_dir = tmp_path / "squat_clip"
     frames_dir.mkdir()

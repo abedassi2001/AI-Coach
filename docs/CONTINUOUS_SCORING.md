@@ -103,11 +103,11 @@ Flags (e.g. `shallow_depth`) are **derived from scores**, not independent pass/f
 
 | Module | Role |
 |--------|------|
-| `src/feedback/scoring.py` | Generic 0–100 mapping utilities |
-| `src/feedback/squat_dimensions.py` | Per-dimension squat scorers |
-| `src/feedback/squat_metrics.py` | Raw heel / valgus measurements |
-| `src/feedback/rep_coaching.py` | Flags, coaching text, video summary |
-| `src/feedback/form_analyzer.py` | Orchestrator |
+| `backend/feedback/scoring.py` | Generic 0–100 mapping utilities |
+| `backend/feedback/squat_dimensions.py` | Per-dimension squat scorers |
+| `backend/feedback/squat_metrics.py` | Raw heel / valgus measurements |
+| `backend/feedback/rep_coaching.py` | Flags, coaching text, video summary |
+| `backend/feedback/form_analyzer.py` | Orchestrator |
 
 ## Why rules first, not ML?
 

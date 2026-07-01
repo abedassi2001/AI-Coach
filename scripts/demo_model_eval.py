@@ -17,9 +17,9 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import pandas as pd
 
-from src.inference.rep_classifier import RepQualityPredictor
-from src.training.rep_dataset import build_rep_rows_for_source, merge_labels, load_label_table
-from src.training.synthetic import MISTAKE_PERTURBATIONS, generate_contrastive_bad_reps
+from backend.inference.rep_classifier import RepQualityPredictor
+from backend.training.rep_dataset import build_rep_rows_for_source, merge_labels, load_label_table
+from backend.training.synthetic import MISTAKE_PERTURBATIONS, generate_contrastive_bad_reps
 
 
 def main() -> int:

@@ -30,7 +30,7 @@ def _ss(at: AppTest, key: str, default=None):
 
 
 def main() -> int:
-    app_path = PROJECT_ROOT / "app" / "streamlit_app.py"
+    app_path = PROJECT_ROOT / "frontend" / "streamlit_app.py"
     at = AppTest.from_file(str(app_path), default_timeout=120)
     at.run(timeout=60)
     if at.exception:

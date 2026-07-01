@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from src.features.angles import angle_at_point_degrees, compute_configured_angles, compute_derived_features
-from src.features.feature_pipeline import FeatureExtractionPipeline, load_pose_sequence, smooth_series
-from src.features.normalization import compute_body_scale, euclidean_distance, midpoint
-from src.pose.keypoint_schema import Keypoint, PoseFrame, PoseSequence
+from backend.features.angles import angle_at_point_degrees, compute_configured_angles, compute_derived_features
+from backend.features.feature_pipeline import FeatureExtractionPipeline, load_pose_sequence, smooth_series
+from backend.features.normalization import compute_body_scale, euclidean_distance, midpoint
+from backend.pose.keypoint_schema import Keypoint, PoseFrame, PoseSequence
 
 
 def _kp(x: float, y: float) -> Keypoint:

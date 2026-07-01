@@ -14,7 +14,7 @@ MODEL = PROJECT_ROOT / "models/checkpoints/baseline/form_classifier.joblib"
 def main() -> int:
     if MODEL.exists():
         try:
-            from src.inference.model_loader import try_load_predictor
+            from backend.inference.model_loader import try_load_predictor
 
             if try_load_predictor(MODEL) is not None:
                 print(f"Model OK: {MODEL}")

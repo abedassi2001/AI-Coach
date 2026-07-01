@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from src.features.feature_pipeline import FrameFeatures
-from src.features.rep_segmentation import Repetition
-from src.feedback.form_analyzer import SquatFormAnalyzer, load_scoring_config
+from backend.features.feature_pipeline import FrameFeatures
+from backend.features.rep_segmentation import Repetition
+from backend.feedback.form_analyzer import SquatFormAnalyzer, load_scoring_config
 
 
 def _bottom_frame(knee_min: float, lean: float, asym: float) -> FrameFeatures:

@@ -10,8 +10,8 @@ import pytest
 cv2 = pytest.importorskip("cv2")
 np = pytest.importorskip("numpy")
 
-from src.data.frame_extractor import FrameExtractor, resize_frame
-from src.data.video_loader import VideoLoader
+from backend.data.frame_extractor import FrameExtractor, resize_frame
+from backend.data.video_loader import VideoLoader
 
 
 def test_resize_frame_downscales_large_image():

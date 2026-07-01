@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from src.inference.video_pipeline import load_existing_result
-from src.utils.web_video import (
+from backend.inference.video_pipeline import load_existing_result
+from backend.utils.web_video import (
     ensure_browser_playable,
     find_ffmpeg,
     needs_browser_transcode,

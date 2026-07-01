@@ -13,14 +13,14 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import cv2
 
-from src.pose.keypoint_schema import PoseSequence
-from src.visualization.skeleton import draw_skeleton_on_frame
+from backend.pose.keypoint_schema import PoseSequence
+from backend.visualization.skeleton import draw_skeleton_on_frame
 
 
 def load_sequence(json_path: Path) -> PoseSequence:
     with json_path.open(encoding="utf-8") as f:
         data = json.load(f)
-    from src.pose.keypoint_schema import Keypoint, PoseFrame
+    from backend.pose.keypoint_schema import Keypoint, PoseFrame
 
     frames = []
     for fr in data["frames"]:

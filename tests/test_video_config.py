@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from src.utils.video_math import compute_sample_stride
-from src.utils.config import get_project_root, load_config, resolve_path
+from backend.utils.video_math import compute_sample_stride
+from backend.utils.config import get_project_root, load_config, resolve_path
 
 
 def test_load_config_has_video_section():
@@ -19,7 +19,7 @@ def test_load_config_has_video_section():
 def test_get_project_root():
     root = get_project_root()
     assert (root / "configs" / "default.yaml").exists()
-    assert (root / "src" / "data" / "video_loader.py").exists()
+    assert (root / "backend" / "data" / "video_loader.py").exists()
 
 
 def test_resolve_path():

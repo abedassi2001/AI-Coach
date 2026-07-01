@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from app.analysis_view import build_full_view, build_summary
-from app.issue_copy import issue_copy_for, performance_label
+from frontend.analysis_view import build_full_view, build_summary
+from frontend.issue_copy import issue_copy_for, performance_label
 
 
 def test_performance_labels():

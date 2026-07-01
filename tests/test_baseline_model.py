@@ -5,12 +5,12 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from src.features.feature_pipeline import FrameFeatures
-from src.features.rep_features import extract_rep_features
-from src.features.rep_segmentation import Repetition
-from src.models.baseline_classifier import BaselineFormClassifier
-from src.training.synthetic import augment_labeled_reps
-from src.training.train_baseline import train_baseline_classifier
+from backend.features.feature_pipeline import FrameFeatures
+from backend.features.rep_features import extract_rep_features
+from backend.features.rep_segmentation import Repetition
+from backend.ml.baseline_classifier import BaselineFormClassifier
+from backend.training.synthetic import augment_labeled_reps
+from backend.training.train_baseline import train_baseline_classifier
 
 
 def _sample_rep_frames() -> list[FrameFeatures]:
@@ -98,11 +98,11 @@ def test_train_baseline_with_synthetic_augment(tmp_path, monkeypatch):
         return df
 
     monkeypatch.setattr(
-        "src.training.train_baseline.RepDatasetBuilder.build",
+        "backend.training.train_baseline.RepDatasetBuilder.build",
         fake_build,
     )
     monkeypatch.setattr(
-        "src.training.train_baseline.RepDatasetBuilder.labeled_only",
+        "backend.training.train_baseline.RepDatasetBuilder.labeled_only",
         lambda self, d: d,
     )
 

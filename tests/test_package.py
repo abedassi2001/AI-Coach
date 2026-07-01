@@ -1,7 +1,7 @@
-"""Smoke test — verifies package imports after Phase 1."""
+"""Smoke test — verifies package imports after restructure."""
 
-import src
+import backend
 
 
 def test_package_version():
-    assert src.__version__ == "0.1.0"
+    assert backend.__version__ == "0.1.0"

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.inference.model_loader import try_load_predictor
+from backend.inference.model_loader import try_load_predictor
 
 
 def test_try_load_missing_returns_none():

@@ -12,8 +12,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.inference.rep_classifier import RepQualityPredictor
-from src.training.rep_dataset import discover_processed_sources
+from backend.inference.rep_classifier import RepQualityPredictor
+from backend.training.rep_dataset import discover_processed_sources
 
 
 def main() -> int:
@@ -44,7 +44,7 @@ def main() -> int:
         preds = predictor.predict_source(sid)
         eval_video = PROJECT_ROOT / "data/processed/evaluation" / sid / f"{sid}_evaluation.mp4"
         for p in preds:
-            from src.training.rep_dataset import build_rep_rows_for_source
+            from backend.training.rep_dataset import build_rep_rows_for_source
 
             rows = build_rep_rows_for_source(sid)
             bottom = next(
