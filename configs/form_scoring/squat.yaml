@@ -1,0 +1,91 @@
+# Continuous 0–100 squat form scoring (rule-based)
+# Lower knee angle at bottom = deeper squat (better depth)
+
+analyzer_version: "0.2.0-continuous-scoring"
+
+weights:
+  depth_score: 0.25
+  knee_tracking_score: 0.25
+  torso_control_score: 0.20
+  symmetry_score: 0.10
+  stability_score: 0.10
+  heel_control_score: 0.10
+
+# Quality bands for overall_score / form_score
+quality_bands:
+  good_min: 80
+  acceptable_min: 70
+
+dimensions:
+  depth:
+  # bottom_knee_angle: smaller = deeper
+    ideal: 80          # excellent depth around parallel
+    warning: 95        # noticeably shallow
+    fail: 115          # very shallow / quarter squat
+
+  torso_control:
+  # torso_lean_deg at bottom: smaller = more upright
+    ideal: 28
+    warning: 42
+    fail: 55
+
+  symmetry:
+  # knee_asymmetry_deg at bottom: smaller = more symmetric
+    ideal: 4
+    warning: 12
+    fail: 20
+
+  stability:
+  # knee_angle_std over rep: smaller = smoother path
+    ideal: 6
+    warning: 16
+    fail: 26
+
+  knee_tracking:
+  # valgus proxy (normalized): smaller = better tracking
+    ideal: 0.06
+    warning: 0.13
+    fail: 0.22
+
+  heel_control:
+  # heel lift signal (image y): smaller = heels down
+    ideal: 0.005
+    warning: 0.02
+    fail: 0.045
+    missing_score: 75    # neutral when heels not visible
+
+flag_thresholds:
+  # [flag_id, score_below_triggers_flag]
+  depth_score:
+    - [shallow_depth, 70]
+    - [severe_shallow_depth, 40]
+  torso_control_score:
+    - [forward_lean, 70]
+    - [severe_forward_lean, 40]
+  symmetry_score:
+    - [asymmetry, 70]
+    - [severe_asymmetry, 40]
+  stability_score:
+    - [unstable_path, 70]
+    - [severe_instability, 40]
+  knee_tracking_score:
+    - [knee_valgus, 70]
+    - [severe_knee_valgus, 40]
+  heel_control_score:
+    - [heel_lift, 70]
+    - [severe_heel_lift, 40]
+
+# Map flags to legacy mistake_id for backward compatibility
+legacy_mistake_map:
+  shallow_depth: insufficient_depth
+  severe_shallow_depth: insufficient_depth
+  forward_lean: excessive_forward_lean
+  severe_forward_lean: excessive_forward_lean
+  asymmetry: asymmetry
+  severe_asymmetry: asymmetry
+  unstable_path: unstable_path
+  severe_instability: unstable_path
+  knee_valgus: knee_valgus
+  severe_knee_valgus: knee_valgus
+  heel_lift: heel_lift
+  severe_heel_lift: heel_lift

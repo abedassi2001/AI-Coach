@@ -84,15 +84,26 @@ python scripts/segment_reps.py data/processed/features/sample_squat/features.csv
 
 Output: `data/processed/reps/<video_id>/reps.json` with rep boundaries and phases.
 
-## Form analysis (Phase 6)
+## Form analysis (Phase 6) — continuous 0–100 scoring
+
+Primary scoring engine: **rule-based biomechanical analysis** with per-dimension scores (not ML).
 
 ```bash
 python scripts/analyze_form.py sample_squat
 ```
 
-Output: `data/processed/analysis/<video_id>/form_analysis.json` with per-rep scores and coaching messages.
+Output: `data/processed/analysis/<video_id>/form_analysis.json` with:
 
-## ML baseline (Phase 7)
+- Per-rep scores: `depth_score`, `knee_tracking_score`, `torso_control_score`, `symmetry_score`, `stability_score`, `heel_control_score`, `overall_score` (0–100)
+- Confidence notes (pose, camera angle, heel detection)
+- Flags and deterministic coaching feedback per rep
+- Video-level summary (average scores, best/worst dimension)
+
+See [docs/CONTINUOUS_SCORING.md](docs/CONTINUOUS_SCORING.md) for architecture, thresholds, and example JSON.
+
+## ML baseline (Phase 7) — **experimental**
+
+Binary `good`/`bad` classifier only. Labels in `data/raw/labels/rep_labels.csv` are **not** per-feature scores — use the rule engine above for coaching.
 
 ```bash
 python scripts/bootstrap_labels.py
@@ -100,7 +111,7 @@ python scripts/train_classifier.py --demo
 python scripts/predict_rep_quality.py sample_squat
 ```
 
-See [docs/MODELS.md](docs/MODELS.md) for scalable multi-exercise design.
+See [docs/MODELS.md](docs/MODELS.md). Future: overall score regressor once human 1–100 labels are collected.
 
 ## AI coaching feedback (Phase 9) — **free by default**
 
@@ -130,7 +141,11 @@ python scripts/run_app.py
 # or: streamlit run app/streamlit_app.py
 ```
 
-Opens a browser at `http://localhost:8501` — upload a video or pick a sample, then view annotated video, charts, and coaching text. **No API key required** (free template coach by default).
+Opens a browser at `http://localhost:8501`.
+
+**User flow:** upload → analyze → **summary popup** (score, main issue, quick fix) → **View full analysis** for dimension cards and rep breakdown.
+
+See [app/README.md](app/README.md) for UI architecture and screenshots placeholder.
 
 ## Development phases
 

@@ -8,15 +8,31 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from src.features.feature_pipeline import FrameFeatures
 from src.features.rep_segmentation import (
     Repetition,
     load_frame_features_from_csv,
     load_frame_features_from_json,
 )
+from src.feedback.rep_coaching import (
+    build_video_summary,
+    flags_from_scores,
+    generate_rep_coaching,
+    mistakes_from_flags,
+)
+from src.feedback.scoring import quality_label
+from src.feedback.squat_dimensions import (
+    compute_rep_scores,
+    measure_heel_and_valgus,
+)
+from src.feedback.squat_metrics import heel_lift_detected, knee_valgus_score
 from src.feedback.templates import format_mistake
 from src.pose.keypoint_schema import Keypoint, PoseFrame
-from src.utils.config import load_config, resolve_path
+from src.utils.config import get_project_root, load_config, resolve_path
+
+ANALYZER_VERSION = "0.2.0-continuous-scoring"
 
 
 @dataclass
@@ -27,6 +43,7 @@ class MistakeFinding:
     value: float
     threshold: float
     frame_index: int | None = None
+    flag: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -35,16 +52,31 @@ class MistakeFinding:
 @dataclass
 class RepFormAnalysis:
     rep_id: int
-    form_score: float
+    form_score: float  # backward compat alias for overall_score
     quality: str
+    scores: dict[str, float] = field(default_factory=dict)
+    confidence: dict[str, Any] = field(default_factory=dict)
+    flags: list[str] = field(default_factory=list)
+    feedback: list[str] = field(default_factory=list)
+    coaching: dict[str, Any] = field(default_factory=dict)
     mistakes: list[MistakeFinding] = field(default_factory=list)
     metrics: dict[str, float] = field(default_factory=dict)
+
+    @property
+    def overall_score(self) -> float:
+        return self.scores.get("overall_score", self.form_score)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "rep_id": self.rep_id,
-            "form_score": self.form_score,
+            "overall_score": self.overall_score,
+            "form_score": self.form_score,  # deprecated alias
             "quality": self.quality,
+            "scores": self.scores,
+            "confidence": self.confidence,
+            "flags": self.flags,
+            "feedback": self.feedback,
+            "coaching": self.coaching,
             "mistakes": [m.to_dict() for m in self.mistakes],
             "metrics": self.metrics,
         }
@@ -58,23 +90,40 @@ class FormAnalysisResult:
     overall_score: float
     overall_quality: str
     output_dir: Path
+    analyzer_version: str = ANALYZER_VERSION
+    video_summary: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
+        reps = [r.to_dict() for r in self.rep_analyses]
         return {
+            "analyzer_version": self.analyzer_version,
             "source_id": self.source_id,
             "exercise": self.exercise,
             "overall_score": self.overall_score,
             "overall_quality": self.overall_quality,
             "rep_count": len(self.rep_analyses),
-            "repetitions": [r.to_dict() for r in self.rep_analyses],
+            "video_summary": self.video_summary,
+            "repetitions": reps,
+            "reps": reps,  # alias for GPT / newer consumers
         }
 
     def save_json(self, path: Path | None = None) -> Path:
         out = path or (self.output_dir / "form_analysis.json")
         out.parent.mkdir(parents=True, exist_ok=True)
         with out.open("w", encoding="utf-8") as f:
-            json.dump(self.to_dict(), f, indent=2)
+            json.dump(self.to_dict(), f, indent=2, ensure_ascii=False)
         return out
+
+
+def load_scoring_config(exercise: str = "squat") -> dict[str, Any]:
+    """Load continuous scoring thresholds and weights for an exercise."""
+    path = get_project_root() / "configs/form_scoring" / f"{exercise}.yaml"
+    if path.exists():
+        with path.open(encoding="utf-8") as f:
+            cfg = yaml.safe_load(f) or {}
+        cfg.setdefault("analyzer_version", ANALYZER_VERSION)
+        return cfg
+    return {"analyzer_version": ANALYZER_VERSION, "weights": {}, "dimensions": {}}
 
 
 def load_repetitions(reps_path: str | Path) -> tuple[str, str, list[Repetition]]:
@@ -128,47 +177,23 @@ def _frame_by_index(
     return None
 
 
-def _heel_lift_detected(pose: PoseFrame, threshold: float = 0.02) -> tuple[bool, float]:
-    """Heel higher than ankle in image (smaller y) suggests lift."""
-    lifts: list[float] = []
-    for side in ("left", "right"):
-        ankle = pose.landmarks.get(f"{side}_ankle")
-        heel = pose.landmarks.get(f"{side}_heel")
-        if ankle and heel and ankle.visibility > 0.5 and heel.visibility > 0.5:
-            # y grows downward; heel above ankle => ankle.y - heel.y > 0
-            lifts.append(ankle.y - heel.y)
-    if not lifts:
-        return False, 0.0
-    max_lift = max(lifts)
-    return max_lift > threshold, max_lift
-
-
-def _knee_valgus_score(pose: PoseFrame, torso_length: float) -> float:
-    """
-    Rough valgus proxy: knee x deviates toward body midline vs hip-ankle line.
-    Works best with front-angled camera; side view is weak.
-    """
-    if torso_length <= 0:
-        return 0.0
-    scores: list[float] = []
-    for side in ("left", "right"):
-        hip = pose.landmarks.get(f"{side}_hip")
-        knee = pose.landmarks.get(f"{side}_knee")
-        ankle = pose.landmarks.get(f"{side}_ankle")
-        if not all(p and p.visibility > 0.5 for p in (hip, knee, ankle)):
-            continue
-        mid_x = (hip.x + ankle.x) / 2.0
-        deviation = abs(knee.x - mid_x) / torso_length
-        scores.append(deviation)
-    return max(scores) if scores else 0.0
-
-
 class SquatFormAnalyzer:
-    """Apply configurable rules to each segmented repetition."""
+    """
+    Apply configurable biomechanical rules to each segmented repetition.
 
-    def __init__(self, rules: dict[str, Any] | None = None) -> None:
+    Produces continuous 0–100 scores per form dimension plus deterministic
+    coaching feedback. The optional ML classifier (form_classifier.joblib) is
+  separate and experimental — this analyzer is the primary scoring engine.
+    """
+
+    def __init__(
+        self,
+        rules: dict[str, Any] | None = None,
+        scoring_config: dict[str, Any] | None = None,
+    ) -> None:
         cfg = load_config()
         self.rules = rules or cfg.get("form_rules", {})
+        self.scoring_config = scoring_config or load_scoring_config("squat")
 
     def analyze_rep(
         self,
@@ -176,141 +201,71 @@ class SquatFormAnalyzer:
         rep_frames: list[FrameFeatures],
         bottom_pose: PoseFrame | None = None,
     ) -> RepFormAnalysis:
-        mistakes: list[MistakeFinding] = []
         bottom = _frame_by_index(rep_frames, rep.bottom_frame) or (
             rep_frames[0] if rep_frames else None
         )
 
-        metrics: dict[str, float] = {
-            "bottom_knee_angle": rep.bottom_knee_angle,
-        }
-
-        if bottom:
-            metrics["bottom_torso_lean"] = bottom.angles.get("torso_lean", float("nan"))
-            metrics["bottom_knee_asymmetry"] = bottom.derived.get(
-                "knee_asymmetry_deg", float("nan")
-            )
-
-        # --- insufficient depth ---
-        max_depth_angle = self.rules.get("min_depth_knee_angle", 90)
-        if rep.bottom_knee_angle > max_depth_angle:
-            mistakes.append(
-                MistakeFinding(
-                    mistake_id="insufficient_depth",
-                    severity="high",
-                    message=format_mistake(
-                        "insufficient_depth", rep.bottom_knee_angle, max_depth_angle
-                    ),
-                    value=rep.bottom_knee_angle,
-                    threshold=max_depth_angle,
-                    frame_index=rep.bottom_frame,
-                )
-            )
-
-        # --- forward lean at bottom ---
-        if bottom:
-            lean = bottom.angles.get("torso_lean", float("nan"))
-            max_lean = self.rules.get("max_torso_lean_deg", 45)
-            if lean == lean and lean > max_lean:
-                mistakes.append(
-                    MistakeFinding(
-                        mistake_id="excessive_forward_lean",
-                        severity="medium",
-                        message=format_mistake("excessive_forward_lean", lean, max_lean),
-                        value=lean,
-                        threshold=max_lean,
-                        frame_index=rep.bottom_frame,
-                    )
-                )
-
-        # --- asymmetry at bottom ---
-        if bottom:
-            asym = bottom.derived.get("knee_asymmetry_deg", float("nan"))
-            asym_threshold = self.rules.get("max_knee_asymmetry_deg", 15)
-            if asym == asym and asym > asym_threshold:
-                mistakes.append(
-                    MistakeFinding(
-                        mistake_id="asymmetry",
-                        severity="medium",
-                        message=format_mistake("asymmetry", asym, asym_threshold),
-                        value=asym,
-                        threshold=asym_threshold,
-                        frame_index=rep.bottom_frame,
-                    )
-                )
-
-        # --- unstable path (knee angle std dev over rep) ---
         knee_series = [
             f.derived.get("knee_angle_min", float("nan"))
             for f in rep_frames
-            if f.derived.get("knee_angle_min", float("nan")) == f.derived.get("knee_angle_min", float("nan"))
+            if f.derived.get("knee_angle_min", float("nan"))
+            == f.derived.get("knee_angle_min", float("nan"))
         ]
-        if len(knee_series) >= 3:
-            instability = statistics.pstdev(knee_series)
-            metrics["knee_angle_std"] = instability
-            unstable_threshold = self.rules.get("max_knee_angle_std", 25)
-            if instability > unstable_threshold:
-                mistakes.append(
-                    MistakeFinding(
-                        mistake_id="unstable_path",
-                        severity="low",
-                        message=format_mistake("unstable_path", instability, unstable_threshold),
-                        value=instability,
-                        threshold=unstable_threshold,
-                    )
-                )
+        knee_std = statistics.pstdev(knee_series) if len(knee_series) >= 3 else float("nan")
 
-        # --- keypoint-based checks at bottom ---
+        heel_signal: float | None = None
+        valgus: float | None = None
         if bottom_pose and bottom:
-            torso = bottom.torso_length if bottom.torso_length == bottom.torso_length else 0.1
+            heel_signal, valgus, _ = measure_heel_and_valgus(bottom_pose, bottom)
+        elif bottom_pose is None and bottom is None:
+            heel_signal, valgus = None, None
 
-            lifted, lift_val = _heel_lift_detected(bottom_pose)
-            metrics["heel_lift_signal"] = lift_val
-            if lifted:
-                mistakes.append(
-                    MistakeFinding(
-                        mistake_id="heel_lift",
-                        severity="medium",
-                        message=format_mistake("heel_lift", lift_val, 0.02),
-                        value=lift_val,
-                        threshold=0.02,
-                        frame_index=rep.bottom_frame,
-                    )
-                )
+        dims, confidence, metrics = compute_rep_scores(
+            rep,
+            rep_frames,
+            bottom,
+            bottom_pose,
+            self.scoring_config,
+            knee_angle_std=knee_std,
+            heel_lift_signal=heel_signal,
+            valgus=valgus,
+        )
 
-            valgus = _knee_valgus_score(bottom_pose, torso)
-            metrics["knee_valgus_score"] = valgus
-            valgus_threshold = self.rules.get("knee_valgus_threshold", 0.15)
-            if valgus > valgus_threshold:
-                mistakes.append(
-                    MistakeFinding(
-                        mistake_id="knee_valgus",
-                        severity="medium",
-                        message=format_mistake("knee_valgus", valgus, valgus_threshold),
-                        value=valgus,
-                        threshold=valgus_threshold,
-                        frame_index=rep.bottom_frame,
-                    )
-                )
+        scores = dims.as_dict()
+        flag_thresholds = self.scoring_config.get("flag_thresholds", {})
+        flags = flags_from_scores(scores, flag_thresholds)
 
-        score = self._score_from_mistakes(mistakes)
-        quality = "good" if score >= 80 and not mistakes else "needs_work"
+        legacy_map = self.scoring_config.get("legacy_mistake_map", {})
+        mistake_dicts = mistakes_from_flags(
+            flags,
+            scores,
+            metrics,
+            legacy_map,
+            frame_index=rep.bottom_frame,
+        )
+        mistakes = [MistakeFinding(**m) for m in mistake_dicts]
+
+        coaching = generate_rep_coaching(scores, flags, confidence.as_dict())
+
+        bands = self.scoring_config.get("quality_bands", {})
+        quality = quality_label(
+            dims.overall_score,
+            good_min=float(bands.get("good_min", 80)),
+            acceptable_min=float(bands.get("acceptable_min", 70)),
+        )
 
         return RepFormAnalysis(
             rep_id=rep.rep_id,
-            form_score=score,
+            form_score=dims.overall_score,
             quality=quality,
+            scores=scores,
+            confidence=confidence.as_dict(),
+            flags=flags,
+            feedback=coaching["feedback"],
+            coaching=coaching,
             mistakes=mistakes,
             metrics=metrics,
         )
-
-    @staticmethod
-    def _score_from_mistakes(mistakes: list[MistakeFinding]) -> float:
-        penalties = {"high": 25, "medium": 15, "low": 8}
-        score = 100.0
-        for m in mistakes:
-            score -= penalties.get(m.severity, 10)
-        return max(0.0, round(score, 1))
 
     def analyze(
         self,
@@ -335,11 +290,22 @@ class SquatFormAnalyzer:
             rep_analyses.append(self.analyze_rep(rep, rep_frames, bottom_pose))
 
         overall = (
-            round(sum(r.form_score for r in rep_analyses) / len(rep_analyses), 1)
+            round(sum(r.overall_score for r in rep_analyses) / len(rep_analyses), 1)
             if rep_analyses
             else 0.0
         )
-        overall_quality = "good" if overall >= 80 else "needs_work"
+        bands = self.scoring_config.get("quality_bands", {})
+        overall_quality = quality_label(
+            overall,
+            good_min=float(bands.get("good_min", 80)),
+            acceptable_min=float(bands.get("acceptable_min", 70)),
+        )
+
+        analyzer_version = str(
+            self.scoring_config.get("analyzer_version", ANALYZER_VERSION)
+        )
+        rep_dicts = [r.to_dict() for r in rep_analyses]
+        video_summary = build_video_summary(rep_dicts, analyzer_version)
 
         out_dir = (
             Path(output_dir)
@@ -355,6 +321,13 @@ class SquatFormAnalyzer:
             overall_score=overall,
             overall_quality=overall_quality,
             output_dir=out_dir,
+            analyzer_version=analyzer_version,
+            video_summary=video_summary,
         )
         result.save_json()
         return result
+
+
+# Re-export for backward compatibility with tests importing private helpers
+_heel_lift_detected = heel_lift_detected
+_knee_valgus_score = knee_valgus_score

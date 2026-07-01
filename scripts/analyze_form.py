@@ -69,9 +69,16 @@ def main() -> int:
     print(f"Output:         {(result.output_dir / 'form_analysis.json').resolve()}")
 
     for rep in result.rep_analyses:
-        print(f"\n--- Rep {rep.rep_id} | score {rep.form_score} | {rep.quality} ---")
+        print(f"\n--- Rep {rep.rep_id} | overall {rep.overall_score} | {rep.quality} ---")
+        if rep.scores:
+            print(
+                "  Scores: "
+                + ", ".join(f"{k}={v}" for k, v in rep.scores.items() if k != "overall_score")
+            )
+        if rep.feedback:
+            print(f"  Summary: {rep.feedback[0]}")
         if not rep.mistakes:
-            print("  No mistakes flagged.")
+            print("  No mistake flags.")
         for m in rep.mistakes:
             print(f"  [{m.severity}] {m.mistake_id}: {m.message}")
 

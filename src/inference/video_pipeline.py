@@ -13,6 +13,7 @@ from src.features.rep_segmentation import RepSegmentationPipeline
 from src.feedback.coaching_pipeline import generate_coaching
 from src.feedback.form_analyzer import SquatFormAnalyzer
 from src.pose.pose_pipeline import PoseExtractionPipeline
+from src.utils.config import get_project_root, resolve_path
 from src.utils.web_video import ensure_browser_playable
 from src.visualization.evaluation_overlay import (
     build_evaluation_report,
