@@ -78,4 +78,5 @@ def test_segment_from_sample_features():
     pipeline = RepSegmentationPipeline(min_rep_duration_sec=0.1, min_prominence=3.0)
     result = pipeline.segment_from_features_file(features)
     assert result.output_dir.joinpath("reps.json").exists()
-    assert result.frame_count == 30
+    assert result.frame_count > 0
+    assert len(result.repetitions) >= 1

@@ -143,6 +143,8 @@ class BaselineFormClassifier(FormClassifier):
     def save(self, path: str) -> None:
         if self.pipeline is None:
             raise RuntimeError("Model not fitted")
+        import sklearn
+
         out = Path(path)
         out.parent.mkdir(parents=True, exist_ok=True)
         payload = {
@@ -151,6 +153,7 @@ class BaselineFormClassifier(FormClassifier):
             "feature_columns": self.feature_columns,
             "categorical_columns": self.categorical_columns,
             "classes": self.classes_,
+            "sklearn_version": sklearn.__version__,
             "pipeline": self.pipeline,
         }
         joblib.dump(payload, out)

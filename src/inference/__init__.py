@@ -1,17 +1,7 @@
 """End-to-end inference on new exercise videos."""
 
-from src.inference.video_pipeline import (
-    PipelineResult,
-    list_demo_videos,
-    load_existing_result,
-    run_full_pipeline,
-    stage_uploaded_video,
-)
+# Import submodules directly to avoid circular imports, e.g.:
+#   from src.inference.video_pipeline import run_full_pipeline
+#   from src.inference.rep_classifier import RepQualityPredictor
 
-__all__ = [
-    "PipelineResult",
-    "list_demo_videos",
-    "load_existing_result",
-    "run_full_pipeline",
-    "stage_uploaded_video",
-]
+__all__: list[str] = []

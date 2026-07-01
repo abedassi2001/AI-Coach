@@ -11,7 +11,6 @@ import cv2
 import numpy as np
 
 from src.feedback.form_analyzer import load_pose_frames, load_repetitions
-from src.inference.rep_classifier import RepQualityPredictor
 from src.pose.keypoint_schema import Keypoint, PoseFrame
 from src.visualization.skeleton import draw_skeleton_on_frame
 from src.utils.web_video import write_browser_playable_video
@@ -122,9 +121,12 @@ def load_evaluation_artifacts(
 
     predictions_by_rep: dict[int, dict[str, Any]] = {}
     if model_path and Path(model_path).exists():
-        predictor = RepQualityPredictor.load(str(model_path))
-        for pred in predictor.predict_source(source_id):
-            predictions_by_rep[int(pred["rep_id"])] = pred
+        from src.inference.model_loader import try_load_predictor
+
+        predictor = try_load_predictor(model_path)
+        if predictor is not None:
+            for pred in predictor.predict_source(source_id):
+                predictions_by_rep[int(pred["rep_id"])] = pred
 
     reps: list[RepContext] = []
     for r in reps_data.get("repetitions", []):
@@ -139,7 +141,7 @@ def load_evaluation_artifacts(
                 bottom_frame=int(r["bottom_frame"]),
                 bottom_knee_angle=float(r.get("bottom_knee_angle", 0)),
                 phases=r.get("phases", []),
-                form_score=rep_a.get("form_score"),
+                form_score=rep_a.get("overall_score", rep_a.get("form_score")),
                 rule_quality=rep_a.get("quality"),
                 mistakes=rep_a.get("mistakes", []),
                 prediction=pred.get("prediction"),

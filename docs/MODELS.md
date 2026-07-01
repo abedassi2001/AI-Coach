@@ -27,16 +27,15 @@ Phase 7 and 8 share the same **rep feature schema** — Phase 8 adds temporal mo
 
 ## Labels
 
-**Human labels (best):** `data/raw/labels/rep_labels.csv`
+**Human labels (best):** `data/raw/labels/rep_labels.csv` — binary `good`/`bad` per rep only.
 
-```csv
-source_id,exercise,rep_id,label
-my_video,deadlift,1,good
-```
+**Primary scoring:** `SquatFormAnalyzer` continuous 0–100 dimensions — see [docs/CONTINUOUS_SCORING.md](CONTINUOUS_SCORING.md).
 
 **Weak labels (bootstrap):** `python scripts/bootstrap_labels.py` from Phase 6 rules.
 
 **Synthetic (dev only):** `python scripts/train_classifier.py --demo`
+
+> The sklearn classifier is **experimental**. Per-feature coaching comes from the rule engine, not ML.
 
 ## Training
 

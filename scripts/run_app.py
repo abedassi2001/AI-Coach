@@ -12,6 +12,13 @@ APP = PROJECT_ROOT / "app" / "streamlit_app.py"
 
 
 def main() -> int:
+    ensure = subprocess.run(
+        [sys.executable, str(PROJECT_ROOT / "scripts/ensure_model.py")],
+        cwd=PROJECT_ROOT,
+    )
+    if ensure.returncode != 0:
+        print("Warning: could not verify ML model (rule-based analysis still works).", file=sys.stderr)
+
     cmd = [
         sys.executable,
         "-m",

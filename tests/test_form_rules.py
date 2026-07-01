@@ -1,4 +1,4 @@
-"""Tests for rule-based form analysis (Phase 6)."""
+"""Tests for rule-based form analysis with continuous scoring."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import pytest
 
 from src.features.feature_pipeline import FrameFeatures
 from src.features.rep_segmentation import Repetition
-from src.feedback.form_analyzer import SquatFormAnalyzer
+from src.feedback.form_analyzer import SquatFormAnalyzer, load_scoring_config
 
 
 def _bottom_frame(knee_min: float, lean: float, asym: float) -> FrameFeatures:
@@ -22,7 +22,7 @@ def _bottom_frame(knee_min: float, lean: float, asym: float) -> FrameFeatures:
 
 
 def test_depth_rule_flags_shallow_squat():
-    analyzer = SquatFormAnalyzer(rules={"min_depth_knee_angle": 90})
+    analyzer = SquatFormAnalyzer()
     rep = Repetition(
         rep_id=1,
         start_frame=0,
@@ -41,10 +41,12 @@ def test_depth_rule_flags_shallow_squat():
     result = analyzer.analyze_rep(rep, frames)
     ids = [m.mistake_id for m in result.mistakes]
     assert "insufficient_depth" in ids
+    assert result.scores["depth_score"] < 70
+    assert "shallow_depth" in result.flags
 
 
 def test_good_depth_no_depth_flag():
-    analyzer = SquatFormAnalyzer(rules={"min_depth_knee_angle": 90})
+    analyzer = SquatFormAnalyzer()
     rep = Repetition(
         rep_id=1,
         start_frame=0,
@@ -58,10 +60,11 @@ def test_good_depth_no_depth_flag():
     frames = [_bottom_frame(80.0, 20.0, 5.0)]
     result = analyzer.analyze_rep(rep, frames)
     assert "insufficient_depth" not in [m.mistake_id for m in result.mistakes]
+    assert result.scores["depth_score"] >= 70
 
 
 def test_forward_lean_rule():
-    analyzer = SquatFormAnalyzer(rules={"max_torso_lean_deg": 30})
+    analyzer = SquatFormAnalyzer()
     rep = Repetition(
         rep_id=1, start_frame=0, end_frame=10, bottom_frame=5,
         start_time_sec=0.0, end_time_sec=1.0, duration_sec=1.0, bottom_knee_angle=85.0,
@@ -69,6 +72,38 @@ def test_forward_lean_rule():
     frames = [_bottom_frame(85.0, lean=50.0, asym=5.0)]
     result = analyzer.analyze_rep(rep, frames)
     assert "excessive_forward_lean" in [m.mistake_id for m in result.mistakes]
+    assert result.scores["torso_control_score"] < 70
+
+
+def test_rep_json_schema_fields():
+    analyzer = SquatFormAnalyzer()
+    rep = Repetition(
+        rep_id=1, start_frame=0, end_frame=10, bottom_frame=5,
+        start_time_sec=0.0, end_time_sec=1.0, duration_sec=1.0, bottom_knee_angle=85.0,
+    )
+    frames = [_bottom_frame(85.0, lean=25.0, asym=5.0)]
+    result = analyzer.analyze_rep(rep, frames)
+    data = result.to_dict()
+    assert "scores" in data
+    assert "confidence" in data
+    assert "flags" in data
+    assert "feedback" in data
+    assert "coaching" in data
+    assert set(data["scores"].keys()) >= {
+        "depth_score",
+        "knee_tracking_score",
+        "torso_control_score",
+        "symmetry_score",
+        "stability_score",
+        "heel_control_score",
+        "overall_score",
+    }
+
+
+def test_scoring_config_loads():
+    cfg = load_scoring_config("squat")
+    assert "weights" in cfg
+    assert cfg["weights"]["depth_score"] == 0.25
 
 
 def test_analyze_sample_pipeline():
@@ -81,3 +116,5 @@ def test_analyze_sample_pipeline():
     result = analyzer.analyze(features, reps)
     assert result.output_dir.joinpath("form_analysis.json").exists()
     assert len(result.rep_analyses) >= 1
+    assert result.video_summary["num_reps"] == len(result.rep_analyses)
+    assert result.analyzer_version.startswith("0.2")

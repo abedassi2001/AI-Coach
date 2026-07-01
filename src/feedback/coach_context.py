@@ -40,11 +40,12 @@ def load_form_analysis(path: str | Path) -> dict[str, Any]:
 def load_model_predictions(source_id: str, model_path: Path | None = None) -> list[dict[str, Any]]:
     root = get_project_root()
     ckpt = model_path or root / "models/checkpoints/baseline/form_classifier.joblib"
-    if not ckpt.exists():
-        return []
-    from src.inference.rep_classifier import RepQualityPredictor
+    from src.inference.model_loader import try_load_predictor
 
-    return RepQualityPredictor.load(str(ckpt)).predict_source(source_id)
+    predictor = try_load_predictor(ckpt)
+    if predictor is None:
+        return []
+    return predictor.predict_source(source_id)
 
 
 def build_coaching_context(
@@ -80,8 +81,13 @@ def build_coaching_context(
         reps_out.append(
             {
                 "rep_id": rid,
-                "rule_score": rep.get("form_score"),
+                "rule_score": rep.get("overall_score", rep.get("form_score")),
                 "rule_quality": rep.get("quality"),
+                "scores": rep.get("scores", {}),
+                "flags": rep.get("flags", []),
+                "feedback": rep.get("feedback", []),
+                "confidence": rep.get("confidence", {}),
+                "coaching": rep.get("coaching", {}),
                 "model_prediction": pred.get("prediction"),
                 "model_confidence": pred.get("confidence"),
                 "metrics": rep.get("metrics", {}),
