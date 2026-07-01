@@ -222,6 +222,13 @@ def main() -> int:
         _fail("video_modal_request should be clear before analysis results")
     _ok("Analyze flow clears stale video panel state")
 
+    # --- Legacy app/ path shim ---
+    compat = AppTest.from_file(str(PROJECT_ROOT / "app" / "streamlit_app.py"), default_timeout=120)
+    compat.run(timeout=60)
+    if compat.exception:
+        _fail(f"app/streamlit_app.py compat shim: {compat.exception}")
+    _ok("app/streamlit_app.py compat shim works")
+
     print("\nAll smoke tests passed.")
     return 0
 

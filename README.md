@@ -143,6 +143,7 @@ Interactive UI to upload a squat video and review the full pipeline:
 ```bash
 python scripts/run_app.py
 # or: streamlit run frontend/streamlit_app.py
+# legacy: streamlit run app/streamlit_app.py  (compat shim)
 ```
 
 Opens a browser at `http://localhost:8501`.
